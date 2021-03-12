@@ -22,7 +22,7 @@ The purpose of this project is to create a new programming language that focuses
 
 ### Example
 
-[Example Video] (https://youtu.be/I007YlARifE)
+[Example Video](https://youtu.be/I007YlARifE)
 
 ## Sample Code
 
