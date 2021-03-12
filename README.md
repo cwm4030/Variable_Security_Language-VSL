@@ -3,14 +3,15 @@
 ## Sample Code
 
 ### Hello World
-```
+```typescript
 fn void main() {
     print("Hello, World!\n");
+    return
 }
 ```
 
 ### Factorial
-```
+```typescript
 fn void main() {
     print("Factorial of 14: ", factorial(14), "\n");
     return;
