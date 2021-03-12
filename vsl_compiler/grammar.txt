@@ -1,0 +1,12 @@
+expression -> or_and;
+
+or_and -> term ( ("or" | "and) term)*;
+term -> literal ( ("-" | "+" | "*" | "/" | "==" | "!=" | ">" | "<" | ">=" | "<=") literal)*;
+literal -> INT | FLOAT | "(" expression ")" | variable | function;
+
+
+current operator is (lower | equal | higher) compared to top of stack
+
+lower precedence = pop from top of stack, then push current operator to stack
+equal precedence = pop from top of stack, then push current operator to stack
+higher precedence = push current operator to stack

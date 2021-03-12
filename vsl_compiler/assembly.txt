@@ -1,0 +1,15 @@
+0: call 3 0
+
+3: sconstant "Factorial of 5: "0
+21: sprint
+22: iconstant 5
+24: call 33 1
+27: iprint
+28: sconstant "\n"0
+31: sprint
+32: halt
+
+33: argload 0
+35: iconstant 1
+37: i_less_equal
+38: jump_if_false ?
