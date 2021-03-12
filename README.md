@@ -27,7 +27,7 @@ The purpose of this project is to create a new programming language that focuses
 ## Sample Code
 
 ### Hello World
-```typescript
+```rust
 fn void main() {
     print("Hello, World!\n");
     return;
@@ -35,7 +35,7 @@ fn void main() {
 ```
 
 ### Factorial
-```typescript
+```rust
 fn void main() {
     print("Factorial of 14: ", factorial(14), "\n");
     return;
