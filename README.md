@@ -48,3 +48,12 @@ fn int:0 factorial(fact int:0) {
     return fact * factorial(fact - 1);
 }
 ```
+
+## Language Rules
+
+1. All code must be contained within a function.
+2. All functions must return within the root scope of the function (even void functions with 'return;').
+3. All variables passed to functions will be passed by value (execpt for arrays).
+4. All statements except if and while loops must end with a semicolon.
+5. The syntax for defining new variables is as follows:
+    let_keyword identifier variable_type:security_value = expression.
