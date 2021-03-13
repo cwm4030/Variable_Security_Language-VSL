@@ -1,5 +1,5 @@
 [package]
-name = "cmvm"
+name = "vsl_vm"
 version = "0.1.0"
 authors = ["Caden <mcaden966@gmail.com>"]
 edition = "2018"
