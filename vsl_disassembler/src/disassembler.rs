@@ -132,7 +132,12 @@ impl Disassembler {
                     let index = self.ip - 1;
                     let mut string: String = String::new();
                     while self.code[self.ip] != 0 && self.code[self.ip] < 128 {
-                        string.push(self.code[self.ip] as u8 as char);
+                        if self.code[self.ip] != 10 {
+                            string.push(self.code[self.ip] as u8 as char);
+                        } else {
+                            string.push('\\');
+                            string.push('n');
+                        }
                         self.ip += 1;
                     }
                     println!("{}: {} \"{}\"", index, "s_constant", string);

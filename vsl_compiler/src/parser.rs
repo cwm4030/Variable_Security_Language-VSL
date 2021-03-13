@@ -238,10 +238,8 @@ impl Parser {
                     // left parenthesis
                     self.consume_token();
 
-                    let mut arg_location: i64 = 0;
                     if tokens[self.current_token_num].token_num != RIGHT_PARENTHESIS {
                         loop {
-                            let var_name = tokens[self.current_token_num].token_string.clone();
                             let mut var_type = INT;
                             let mut var_security: i64 = 0;
                             num_args += 1;
@@ -266,19 +264,6 @@ impl Parser {
                             arg_securities.push(var_security);
                             // security
                             self.consume_token();
-    
-                            let variable = Variable {
-                                mem_location: 0,
-                                var_type: var_type,
-                                security: var_security, 
-                                is_arg: true,
-                                arg_location: arg_location,
-                                scope: 0,
-                                function_name: identifier.clone(),
-                            };
-    
-                            arg_location += 1;
-                            self.var_data.insert(var_name, variable);
     
                             if tokens[self.current_token_num].token_num != COMMA {
                                 break;
@@ -510,16 +495,50 @@ impl Parser {
         } else {
             self.left_parenthesis(tokens);
             if tokens[self.current_token_num].token_num != RIGHT_PARENTHESIS {
-                loop {
-                    self.identifier(tokens);
-                    self.var_type(tokens);
-                    self.colon(tokens);
-                    self.integer(tokens);
-    
-                    if tokens[self.current_token_num].token_num != COMMA {
-                        break;
-                    } else {
-                        self.comma(tokens);
+                let mut arg_location: i64 = 0;
+                if tokens[self.current_token_num].token_num != RIGHT_PARENTHESIS {
+                    loop {
+                        let var_name = tokens[self.current_token_num].token_string.clone();
+                        let mut var_type = INT;
+                        let mut var_security: i64 = 0;
+
+                        // identifier
+                        self.identifier(tokens);
+                        if tokens[self.current_token_num].token_num == INT_TYPE {
+                            var_type = INT;
+                        } else if tokens[self.current_token_num].token_num == FLOAT_TYPE {
+                            var_type = FLOAT;
+                        } else if tokens[self.current_token_num].token_num == STRING_TYPE {
+                            var_type = STRING;
+                        }
+                        // var type
+                        self.var_type(tokens);
+                        // colon
+                        self.colon(tokens);
+                        if tokens[self.current_token_num].token_num == INT {
+                            var_security = tokens[self.current_token_num].token_string.parse::<i64>().expect("Failed to parse integer.");
+                        }
+                        // security
+                        self.integer(tokens);
+
+                        let variable = Variable {
+                            mem_location: 0,
+                            var_type: var_type,
+                            security: var_security, 
+                            is_arg: true,
+                            arg_location: arg_location,
+                            scope: 0,
+                            function_name: identifier.clone(),
+                        };
+
+                        arg_location += 1;
+                        self.var_data.insert(var_name, variable);
+
+                        if tokens[self.current_token_num].token_num != COMMA {
+                            break;
+                        } else {
+                            self.comma(tokens);
+                        }
                     }
                 }
             }

@@ -1,19 +1,6 @@
 fn void main() {
-    let x int:0 = 20;
-
-    while x >= 1 {
-        let y int:0 = 0;
-        print("Factorial of ", x, ": ", factorial(x), "\n");
-        x = x - 1;
-    }
-
-    if x <= 20 {
-        print("Hello, World!\n");
-        let y int:0 = 1;
-        if y == 1 {
-            print(y, "\n");
-        }
-    }
+    let fact int:0 = 14;
+    print("Factorial of 14: ", factorial(fact), "\n");
     return;
 }
 
