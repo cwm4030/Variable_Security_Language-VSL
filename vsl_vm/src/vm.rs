@@ -549,7 +549,6 @@ impl VM {
                         string.push(self.code[self.ip] as u8 as char);
                         self.ip += 1;
                     }
-                    string.push(0 as char);
                     self.string_constants.push(string);
                     self.ip += 1;
 
