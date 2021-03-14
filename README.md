@@ -87,7 +87,8 @@ fn int:0 fibonacci(n int:0) {
 
 
 ## To Do List
-1. Implement the 'read();' function to get input from user.
-2. Finish string operations.
-3. Implement arrays for the int, float, and string data types. (And char indexing for string type)
-4. Implement garbage collection in the VM.
+1. Add the 'break;' statement so that while loops are logically complete.
+2. Implement the 'read();' function to get input from user.
+3. Finish string operations.
+4. Implement arrays for the int, float, and string data types. (And char indexing for string type)
+5. Implement garbage collection in the VM.
