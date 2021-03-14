@@ -47,6 +47,35 @@ fn int:0 factorial(fact int:0) {
     return fact * factorial(fact - 1);
 }
 ```
+### Fibonacci
+```typescript
+fn void main() {
+    let n int:0 = 20;
+    print("Fibonacci of ", n, ": ", fibonacci(n), "\n");
+    return;
+}
+
+fn int:0 fibonacci(n int:0) {
+    let newfib int:0 = 0;
+    if n <= 1 {
+        return 0;
+    } else if n == 2 {
+        return 1;
+    } else {
+        let fib0 int:0 = 0;
+        let fib1 int:0 = 1;
+        n = n - 2;
+
+        while n >= 0 {
+            newfib = fib0 + fib1;
+            fib0 = fib1;
+            fib1 = newfib;
+            n = n - 1;
+        }
+    }
+    return newfib;
+}
+```
 
 ## Language Rules
 1. All code must be contained within a function.
