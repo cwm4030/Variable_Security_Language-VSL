@@ -6,20 +6,24 @@ The purpose of this project is to create a new programming language that focuses
 ### Windows
 1. Download the Windows binaries from releases.
 2. Download Windows terminal from the Microsoft Store (The default cmd and powershell applications are notoriously awful).
-3. Create a vsl file such as 'main.vsl'
+3. Create a vsl file such as 'main.vsl'.
 4. Enter either some example code or code for a new program.
 5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
 6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
 
 ### Linux
 1. Download the Linux binaries from releases.
-3. Create a vsl file such as 'main.vsl'
+3. Create a vsl file such as 'main.vsl'.
 4. Enter either some example code or code for a new program.
 5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
 6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
 
 ### Mac
-Same as Linux.
+1. Download the Mac binaries from releases.
+3. Create a vsl file such as 'main.vsl'.
+4. Enter either some example code or code for a new program.
+5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
+6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
 
 ### Example
 [Example Video](https://youtu.be/I007YlARifE)
