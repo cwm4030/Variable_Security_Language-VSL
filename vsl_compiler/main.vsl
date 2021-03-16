@@ -1,12 +1,5 @@
 fn void main() {
-    let fact int:0 = 14;
-    print("Factorial of 14: ", factorial(fact), "\n");
-    return;
-}
-
-fn int:0 factorial(fact int:0) {
-    if fact <= 1 {
-        return 1;
-    }
-    return fact * factorial(fact - 1);
+    let x int[3][3][3]:0 = Array;
+    let f float[4]:0 = Array;
+    let s string[5]:0 = Array;
 }
