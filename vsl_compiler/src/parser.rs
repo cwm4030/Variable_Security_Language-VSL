@@ -5,60 +5,58 @@ use std::collections::HashMap;
 #[path = "lexer.rs"]
 pub mod lexer;
 
-pub const POP: i64 = 1;
+const POP: i64 = 1;
+const LOCAL_LOAD: i64 = 2;
+const LOCAL_STORE: i64 = 3;
 
-pub const I_CONSTANT: i64 = 2;
-pub const I_ADD: i64 = 3;
-pub const I_SUB: i64 = 4;
-pub const I_MUL: i64 = 5;
-pub const I_DIV: i64 = 6;
-pub const I_EQUAL: i64 = 7;
-pub const I_LESS: i64 = 8;
-pub const I_GREATER: i64 = 9;
-pub const I_NOT_EQUAL: i64 = 10;
-pub const I_LESS_EQUAL: i64 = 11;
-pub const I_GREATER_EQUAL: i64 = 12;
-pub const I_AND: i64 = 13;
-pub const I_OR: i64 = 14;
-pub const I_LOAD: i64 = 15;
-pub const I_STORE: i64 = 16;
+const I_CONSTANT: i64 = 4;
+const I_ADD: i64 = 5;
+const I_SUB: i64 = 6;
+const I_MUL: i64 = 7;
+const I_DIV: i64 = 8;
+const I_EQUAL: i64 = 9;
+const I_LESS: i64 = 10;
+const I_GREATER: i64 = 11;
+const I_NOT_EQUAL: i64 = 12;
+const I_LESS_EQUAL: i64 = 13;
+const I_GREATER_EQUAL: i64 = 14;
+const I_AND: i64 = 15;
+const I_OR: i64 = 16;
 
-pub const F_CONSTANT: i64 = 17;
-pub const F_ADD: i64 = 18;
-pub const F_SUB: i64 = 19;
-pub const F_MUL: i64 = 20;
-pub const F_DIV: i64 = 21;
-pub const F_EQUAL: i64 = 22;
-pub const F_LESS: i64 = 23;
-pub const F_GREATER: i64 = 24;
-pub const F_NOT_EQUAL: i64 = 25;
-pub const F_LESS_EQUAL: i64 = 26;
-pub const F_GREATER_EQUAL: i64 = 27;
-pub const F_AND: i64 = 28;
-pub const F_OR: i64 = 29;
-pub const F_LOAD: i64 = 30;
-pub const F_STORE: i64 = 31;
+const F_CONSTANT: i64 = 17;
+const F_ADD: i64 = 18;
+const F_SUB: i64 = 19;
+const F_MUL: i64 = 20;
+const F_DIV: i64 = 21;
+const F_EQUAL: i64 = 22;
+const F_LESS: i64 = 23;
+const F_GREATER: i64 = 24;
+const F_NOT_EQUAL: i64 = 25;
+const F_LESS_EQUAL: i64 = 26;
+const F_GREATER_EQUAL: i64 = 27;
+const F_AND: i64 = 28;
+const F_OR: i64 = 29;
 
-pub const S_CONSTANT: i64 = 32;
-pub const S_ADD: i64 = 33;
-pub const S_LOAD: i64 = 34;
-pub const S_STORE: i64 = 35;
-//pub const S_JUMP_EQUAL: i64 = 36;
-//pub const S_JUMP_NOT_EQUAL: i64 = 37;
+const S_CONSTANT: i64 = 30;
+const S_ADD: i64 = 31;
+const S_LOAD: i64 = 32;
+const S_STORE: i64 = 33;
+//const S_JUMP_EQUAL: i64 = 34;
+//const S_JUMP_NOT_EQUAL: i64 = 35;
 
-pub const JUMP_IF_FALSE: i64 = 38;
-pub const JUMP: i64 = 39;
+const JUMP_IF_FALSE: i64 = 36;
+const JUMP: i64 = 37;
 
-pub const CALL: i64 = 40;
-pub const RETURN_VAL: i64 = 41;
-pub const RETURN_NON_VAL: i64 = 42;
-pub const ARG_LOAD: i64 = 43;
-pub const ARG_STORE: i64 = 44;
+const CALL: i64 = 38;
+const RETURN_VAL: i64 = 39;
+const RETURN_NON_VAL: i64 = 40;
+const ARG_LOAD: i64 = 41;
+const ARG_STORE: i64 = 42;
 
-pub const HALT: i64 = 45;
-pub const I_PRINT: i64 = 46;
-pub const F_PRINT: i64 = 47;
-pub const S_PRINT: i64 = 48;
+const HALT: i64 = 43;
+const I_PRINT: i64 = 44;
+const F_PRINT: i64 = 45;
+const S_PRINT: i64 = 46;
 
 //----------------------------------------------------------------------------------
 
@@ -463,7 +461,7 @@ impl Parser {
     //--------------------------------------------------------------------------------------------------------------------------
 
     fn fn_dec(&mut self, tokens: &Vec<lexer::Token>) {
-        self.stack_size = 3;
+        self.stack_size = 0;
         self.fn_keyword(tokens);
         let mut fn_type: u8 = VOID;
         if tokens[self.current_token_num].token_num != VOID {
@@ -1720,10 +1718,8 @@ impl Parser {
         self.expression(tokens, expression_type, security_level);
 
         if is_arg == false {
-            if expression_type == INT {
-                self.code.push(I_STORE);
-            } else if expression_type == FLOAT {
-                self.code.push(F_STORE);
+            if expression_type == INT || expression_type == FLOAT {
+                self.code.push(LOCAL_STORE);
             } else if expression_type == STRING {
                 self.code.push(S_STORE);
             }
@@ -1790,10 +1786,8 @@ impl Parser {
 
         self.var_data.insert(identifier.clone(), variable);
 
-        if var_type == INT {
-            self.code.push(I_STORE);
-        } else if var_type == FLOAT {
-            self.code.push(F_STORE);
+        if var_type == INT || var_type == FLOAT {
+            self.code.push(LOCAL_STORE);
         } else if var_type == STRING {
             self.code.push(S_STORE);
         }
@@ -2048,10 +2042,8 @@ impl Parser {
             self.error = true;
         }
         if is_arg == false {
-            if var_type == INT {
-                self.code.push(I_LOAD);
-            } else if var_type == FLOAT {
-                self.code.push(F_LOAD);
+            if var_type == INT || var_type == FLOAT {
+                self.code.push(LOCAL_LOAD);
             } else if var_type == STRING {
                 self.code.push(S_LOAD);
             }

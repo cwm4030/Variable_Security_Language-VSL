@@ -1,22 +1,22 @@
 use std::io::Write;
 
 const POP: i64 = 1;
+const LOCAL_LOAD: i64 = 2;
+const LOCAL_STORE: i64 = 3;
 
-const I_CONSTANT: i64 = 2;
-const I_ADD: i64 = 3;
-const I_SUB: i64 = 4;
-const I_MUL: i64 = 5;
-const I_DIV: i64 = 6;
-const I_EQUAL: i64 = 7;
-const I_LESS: i64 = 8;
-const I_GREATER: i64 = 9;
-const I_NOT_EQUAL: i64 = 10;
-const I_LESS_EQUAL: i64 = 11;
-const I_GREATER_EQUAL: i64 = 12;
-const I_AND: i64 = 13;
-const I_OR: i64 = 14;
-const I_LOAD: i64 = 15;
-const I_STORE: i64 = 16;
+const I_CONSTANT: i64 = 4;
+const I_ADD: i64 = 5;
+const I_SUB: i64 = 6;
+const I_MUL: i64 = 7;
+const I_DIV: i64 = 8;
+const I_EQUAL: i64 = 9;
+const I_LESS: i64 = 10;
+const I_GREATER: i64 = 11;
+const I_NOT_EQUAL: i64 = 12;
+const I_LESS_EQUAL: i64 = 13;
+const I_GREATER_EQUAL: i64 = 14;
+const I_AND: i64 = 15;
+const I_OR: i64 = 16;
 
 const F_CONSTANT: i64 = 17;
 const F_ADD: i64 = 18;
@@ -31,29 +31,27 @@ const F_LESS_EQUAL: i64 = 26;
 const F_GREATER_EQUAL: i64 = 27;
 const F_AND: i64 = 28;
 const F_OR: i64 = 29;
-const F_LOAD: i64 = 30;
-const F_STORE: i64 = 31;
 
-const S_CONSTANT: i64 = 32;
-const S_ADD: i64 = 33;
-const S_LOAD: i64 = 34;
-const S_STORE: i64 = 35;
-//const S_JUMP_EQUAL: i64 = 36;
-//const S_JUMP_NOT_EQUAL: i64 = 37;
+const S_CONSTANT: i64 = 30;
+const S_ADD: i64 = 31;
+const S_LOAD: i64 = 32;
+const S_STORE: i64 = 33;
+//const S_JUMP_EQUAL: i64 = 34;
+//const S_JUMP_NOT_EQUAL: i64 = 35;
 
-const JUMP_IF_FALSE: i64 = 38;
-const JUMP: i64 = 39;
+const JUMP_IF_FALSE: i64 = 36;
+const JUMP: i64 = 37;
 
-const CALL: i64 = 40;
-const RETURN_VAL: i64 = 41;
-const RETURN_NON_VAL: i64 = 42;
-const ARG_LOAD: i64 = 43;
-const ARG_STORE: i64 = 44;
+const CALL: i64 = 38;
+const RETURN_VAL: i64 = 39;
+const RETURN_NON_VAL: i64 = 40;
+const ARG_LOAD: i64 = 41;
+const ARG_STORE: i64 = 42;
 
-const HALT: i64 = 45;
-const I_PRINT: i64 = 46;
-const F_PRINT: i64 = 47;
-const S_PRINT: i64 = 48;
+const HALT: i64 = 43;
+const I_PRINT: i64 = 44;
+const F_PRINT: i64 = 45;
+const S_PRINT: i64 = 46;
 
 pub struct VM {
     string_constants: Vec<String>,
@@ -97,9 +95,31 @@ impl VM {
                     if self.debug {
                         println!("{}: {} {}", self.ip - 1, "pop", self.code[self.ip]);
                     }
-                    let index = self.code[self.ip] as usize + self.fp;
+                    let index = self.code[self.ip] as usize + self.fp + 3;
                     self.stack.remove(index);
                     self.sp -= 1;
+                    self.ip += 1;
+                },
+                LOCAL_LOAD => {
+                    if self.debug {
+                        println!("{}: {} {}", self.ip - 1, "i_load", self.code[self.ip]);
+                    }
+                    let index: usize = self.code[self.ip] as usize + self.fp + 3;
+                    self.stack.push(self.stack[index]);
+                    self.ip += 1;
+                    self.sp += 1;
+                },
+                LOCAL_STORE => {
+                    if self.debug {
+                        println!("{}: {} {}", self.ip - 1, "i_store", self.code[self.ip]);
+                    }
+                    let index: usize = self.code[self.ip] as usize + self.fp + 3;
+                    let data = self.stack[self.sp - 1];
+                    if index < self.stack.len() - 1 {
+                        self.stack[index] = data;
+                        self.stack.pop();
+                        self.sp -= 1;
+                    }
                     self.ip += 1;
                 },
                 I_CONSTANT => {
@@ -277,28 +297,6 @@ impl VM {
                         self.stack.push(0);
                     }
                     self.sp -= 1;
-                },
-                I_LOAD => {
-                    if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "i_load", self.code[self.ip]);
-                    }
-                    let index: usize = self.code[self.ip] as usize + self.fp;
-                    self.stack.push(self.stack[index]);
-                    self.ip += 1;
-                    self.sp += 1;
-                },
-                I_STORE => {
-                    if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "i_store", self.code[self.ip]);
-                    }
-                    let index: usize = self.code[self.ip] as usize + self.fp;
-                    let data = self.stack[self.sp - 1];
-                    if index < self.stack.len() - 1 {
-                        self.stack[index] = data;
-                        self.stack.pop();
-                        self.sp -= 1;
-                    }
-                    self.ip += 1;
                 },
                 F_CONSTANT => {
                     if self.debug {
@@ -512,29 +510,6 @@ impl VM {
                     }
                     self.sp -= 1;
                 }
-                F_LOAD => {
-                    if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "f_load", self.code[self.ip]);
-                    }
-                    let index: usize = self.code[self.ip] as usize + self.fp;
-                    self.stack.push(self.stack[index]);
-                    
-                    self.ip += 1;
-                    self.sp += 1;
-                },
-                F_STORE => {
-                    if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "f_store", self.code[self.ip]);
-                    }
-                    let index: usize = self.code[self.ip] as usize + self.fp;
-                    let data = self.stack[self.sp - 1];
-                    if index < self.stack.len() - 1 {
-                        self.stack[index] = data;
-                        self.stack.pop();
-                        self.sp -= 1;
-                    }
-                    self.ip += 1;
-                },
                 S_CONSTANT => {
                     if self.debug {
                         println!("{}: {}", self.ip - 1, "s_constant");
@@ -632,7 +607,7 @@ impl VM {
                 },
                 RETURN_VAL => {
                     if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "return", self.stack[self.sp - 1]);
+                        println!("{}: {} {}", self.ip - 1, "return_val", self.stack[self.sp - 1]);
                     }
                     let return_value: i64 = self.stack[self.sp - 1];
                     let fp: usize = self.stack[self.sp - 2] as usize;
@@ -650,7 +625,7 @@ impl VM {
                 },
                 RETURN_NON_VAL => {
                     if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "return", self.stack[self.sp - 1]);
+                        println!("{}: {}", self.ip - 1, "return_non_val");
                     }
                     let fp: usize = self.stack[self.sp - 1] as usize;
                     let nargs: usize = self.stack[self.sp - 2] as usize;
