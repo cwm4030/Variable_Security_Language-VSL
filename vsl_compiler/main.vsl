@@ -1,5 +1,26 @@
 fn void main() {
-    let x int[3][3][3]:0 = Array;
-    let f float[4]:0 = Array;
-    let s string[5]:0 = Array;
+    let n int:0 = 20;
+    print("Fibonacci of ", n, ": ", fibonacci(n), "\n");
+    return;
+}
+
+fn int:0 fibonacci(n int:0) {
+    let newfib int:0 = 0;
+    if n <= 1 {
+        return 0;
+    } else if n == 2 {
+        return 1;
+    } else {
+        let fib0 int:0 = 0;
+        let fib1 int:0 = 1;
+        n = n - 2;
+
+        while n >= 0 {
+            newfib = fib0 + fib1;
+            fib0 = fib1;
+            fib1 = newfib;
+            n = n - 1;
+        }
+    }
+    return newfib;
 }

@@ -83,7 +83,7 @@ fn main() {
 		        byte_count = 0;
 		    }
 		}
-		let mut debug_bool = false;
+		let debug_bool: bool;
 		if debug == 0 {
 			debug_bool = false;
 		} else {

@@ -135,7 +135,7 @@ pub struct Parser {
     current_token_num: usize,
     code: Vec<i64>,
     var_data: HashMap<String, Variable>,
-    var_int_float_num: i64,
+    stack_size: i64,
     var_string_num: i64,
     fn_data: HashMap<String, Function>,
     current_fn_name: String,
@@ -151,7 +151,7 @@ impl Parser {
             current_token_num: 0,
             code: Vec::new(),
             var_data: HashMap::new(),
-            var_int_float_num: 0,
+            stack_size: 0,
             var_string_num: 0,
             fn_data: HashMap::new(),
             current_fn_name: String::new(),
@@ -318,6 +318,10 @@ impl Parser {
                     instruction_counter += 1;
                     self.consume_token();
                 },
+                LET => {
+                    self.consume_token();
+                    instruction_counter += 2;
+                },
                 IDENTIFIER => {
                     self.consume_token();
                     if tokens[self.current_token_num].token_num != LEFT_PARENTHESIS {
@@ -459,6 +463,7 @@ impl Parser {
     //--------------------------------------------------------------------------------------------------------------------------
 
     fn fn_dec(&mut self, tokens: &Vec<lexer::Token>) {
+        self.stack_size = 3;
         self.fn_keyword(tokens);
         let mut fn_type: u8 = VOID;
         if tokens[self.current_token_num].token_num != VOID {
@@ -545,20 +550,21 @@ impl Parser {
             self.right_parenthesis(tokens);
         }
         self.return_num = 0;
-        self.block(tokens);
+        let mut locals: Vec<i64> = Vec::new();
+        self.block(tokens, &mut locals);
         if self.return_num == 0 {
             println!("Function '{}' has no return statement.", self.current_fn_name);
             self.error = true;
         }
     }
 
-    fn block(&mut self, tokens: &Vec<lexer::Token>) {
+    fn block(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
         self.left_curley(tokens);
         self.current_scope += 1;
         while self.is_last_token() == false && tokens[self.current_token_num].token_num != RIGHT_CURLEY {
             match tokens[self.current_token_num].token_num {
                 LET => {
-                    self.var_dec(tokens);
+                    self.var_dec(tokens, locals);
                     self.semi_colon(tokens);
                 },
                 IDENTIFIER => {
@@ -576,17 +582,17 @@ impl Parser {
                     }
                 },
                 IF => {
-                    self.if_statement(tokens);
+                    self.if_statement(tokens, locals);
                 },
                 WHILE => {
-                    self.while_statement(tokens);
+                    self.while_statement(tokens, locals);
                 },
                 PRINT => {
                     self.print_statement(tokens);
                     self.semi_colon(tokens);
                 },
                 RETURN => {
-                    self.return_statement(tokens);
+                    self.return_statement(tokens, locals);
                     self.semi_colon(tokens);
                 },
                 _ => {
@@ -1633,7 +1639,7 @@ impl Parser {
     // Code Generation... Kinda (It's mixed with the parsing code for statements)
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    fn if_statement(&mut self, tokens: &Vec<lexer::Token>) {
+    fn if_statement(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
         let mut end_of_if_jump_locations: Vec<i64> = Vec::new();
         loop {
             self.if_keyword(tokens);
@@ -1644,7 +1650,7 @@ impl Parser {
             self.code.push(JUMP_IF_FALSE);
             let code_location = self.code.len();
             self.code.push(0);
-            self.block(tokens);
+            self.block(tokens, locals);
             self.code.push(JUMP);
             end_of_if_jump_locations.push(self.code.len() as i64);
             self.code.push(0);
@@ -1656,7 +1662,7 @@ impl Parser {
             } else {
                 self.else_keyword(tokens);
                 if tokens[self.current_token_num].token_num == LEFT_CURLEY {
-                    self.block(tokens);
+                    self.block(tokens, locals);
                     break;
                 }
             }
@@ -1667,7 +1673,7 @@ impl Parser {
         }
     }
 
-    fn while_statement(&mut self, tokens: &Vec<lexer::Token>) {
+    fn while_statement(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
         self.while_keyword(tokens);
         let begin_location = self.code.len() as i64;
 
@@ -1676,7 +1682,7 @@ impl Parser {
         self.code.push(JUMP_IF_FALSE);
         let code_location = self.code.len();
         self.code.push(0);
-        self.block(tokens);
+        self.block(tokens, locals);
         self.code.push(JUMP);
         self.code.push(begin_location);
         let jump_location = self.code.len() as i64;
@@ -1729,7 +1735,8 @@ impl Parser {
         }
     }
 
-    fn var_dec(&mut self, tokens: &Vec<lexer::Token>) {
+    fn var_dec(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
+        self.stack_size += 1;
         self.let_keyword(tokens);
         let identifier: String = tokens[self.current_token_num].token_string.clone();
         if self.var_data.contains_key(&identifier) == true {
@@ -1768,14 +1775,8 @@ impl Parser {
 
         self.expression(tokens, expression_type, security_level);
 
-        let mut mem_location = self.var_int_float_num;
-        if var_type == INT || var_type == FLOAT {
-            mem_location = self.var_int_float_num;
-            self.var_int_float_num += 1;
-        } else if var_type == STRING {
-            mem_location = self.var_string_num;
-            self.var_string_num += 1;
-        }
+        let mut mem_location = self.stack_size - 1;
+        locals.push(mem_location);
 
         let variable = Variable {
             mem_location: mem_location,
@@ -1843,7 +1844,7 @@ impl Parser {
         self.code.push(num_args);
     }
 
-    fn return_statement(&mut self, tokens: &Vec<lexer::Token>) {
+    fn return_statement(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
         self.return_keyword(tokens);
         if self.current_scope == 0 {
             self.return_num += 1;
@@ -1868,6 +1869,11 @@ impl Parser {
             if error == false {
                 self.expression(tokens, fn_type, security);
             }
+            locals.sort_by(|a, b| b.cmp(a));
+            for local in locals {
+                self.code.push(POP);
+                self.code.push(*local);
+            }
             self.code.push(RETURN_VAL);
         } else {
             match self.fn_data.get(&self.current_fn_name) {
@@ -1880,8 +1886,18 @@ impl Parser {
                 None => {},
             }
             if self.current_fn_name == "main" {
+                locals.sort_by(|a, b| b.cmp(a));
+                for local in locals {
+                    self.code.push(POP);
+                    self.code.push(*local);
+                }
                 self.code.push(HALT);
             } else {
+                locals.sort_by(|a, b| b.cmp(a));
+                for local in locals {
+                    self.code.push(POP);
+                    self.code.push(*local);
+                }
                 self.code.push(RETURN_NON_VAL);
             }
         }

@@ -79,7 +79,10 @@ impl Disassembler {
             self.ip += 1;
 
             match opcode {
-                POP => println!("{}: {}", self.ip - 1, "pop"),
+                POP => {
+                    println!("{}: {} {}", self.ip - 1, "pop", self.code[self.ip]);
+                    self.ip += 1;
+                },
                 I_CONSTANT => {
                     println!("{}: {} {}", self.ip - 1, "i_constant", self.code[self.ip]);
                     self.ip += 1;
