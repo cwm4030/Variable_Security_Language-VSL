@@ -68,15 +68,15 @@ const RIGHT_CURLEY: u8 = 4;
 const EQUAL: u8 = 5;
 const COLON: u8 = 6;
 const COMMA: u8 = 7;
-const LEFT_BRACKET: u8 = 8;
-const RIGHT_BRACKET: u8 = 9;
+//const LEFT_BRACKET: u8 = 8;
+//const RIGHT_BRACKET: u8 = 9;
 
 const ADD: u8 = 10;
 const MUL: u8 = 11;
 const DIV: u8 = 12;
 const SUB: u8 = 13;
 
-const MOD: u8 = 14;
+//const MOD: u8 = 14;
 const LESS: u8 = 15;
 const GREATER: u8 = 16;
 const EQUAL_EQUAL: u8 = 17;
@@ -98,7 +98,7 @@ const ELSE: u8 = 31;
 
 const VOID: u8 = 32;
 const PRINT: u8 = 33;
-const READ: u8 = 34;
+//const READ: u8 = 34;
 
 const IDENTIFIER: u8 = 35;
 const INT: u8 = 36;
@@ -198,7 +198,7 @@ impl Parser {
             match tokens[self.current_token_num].token_num {
                 FN => {
                     let mut fn_type: u8 = INT;
-                    let mut identifier: String = String::new();
+                    let identifier: String;
                     let mut security: i64 = 0;
                     let mem_location: i64 = instruction_counter;
                     let mut num_args: i64 = 0;
@@ -318,7 +318,12 @@ impl Parser {
                 },
                 LET => {
                     self.consume_token();
-                    instruction_counter += 2;
+                    if self.current_token_num + 1 < self.num_tokens {
+                        if tokens[self.current_token_num + 1].token_num == INT_TYPE
+                            || tokens[self.current_token_num + 1].token_num == FLOAT_TYPE {
+                                instruction_counter += 2;
+                            }
+                    }
                 },
                 IDENTIFIER => {
                     self.consume_token();
@@ -463,7 +468,7 @@ impl Parser {
     fn fn_dec(&mut self, tokens: &Vec<lexer::Token>) {
         self.stack_size = 0;
         self.fn_keyword(tokens);
-        let mut fn_type: u8 = VOID;
+        let fn_type: u8;
         if tokens[self.current_token_num].token_num != VOID {
             fn_type = tokens[self.current_token_num].token_num;
             self.fn_type(tokens);
@@ -1732,7 +1737,6 @@ impl Parser {
     }
 
     fn var_dec(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
-        self.stack_size += 1;
         self.let_keyword(tokens);
         let identifier: String = tokens[self.current_token_num].token_string.clone();
         if self.var_data.contains_key(&identifier) == true {
@@ -1744,9 +1748,11 @@ impl Parser {
         let mut expression_type = INT;
         if tokens[self.current_token_num].token_num == INT_TYPE {
             var_type = INT;
+            self.stack_size += 1;
             expression_type = INT;
         } else if tokens[self.current_token_num].token_num == FLOAT_TYPE {
             var_type = FLOAT;
+            self.stack_size += 1;
             expression_type = FLOAT
         } else if tokens[self.current_token_num].token_num == STRING_TYPE {
             var_type = STRING;
@@ -1771,8 +1777,17 @@ impl Parser {
 
         self.expression(tokens, expression_type, security_level);
 
-        let mut mem_location = self.stack_size - 1;
-        locals.push(mem_location);
+        let mem_location: i64;
+
+        if var_type == INT || var_type == FLOAT {
+            mem_location = self.stack_size - 1;
+            locals.push(mem_location);
+        } else if var_type == STRING {
+            mem_location = self.var_string_num;
+            self.var_string_num += 1;
+        } else {
+            mem_location = 0;
+        }
 
         let variable = Variable {
             mem_location: mem_location,
@@ -1912,7 +1927,7 @@ impl Parser {
                 self.expression(tokens, STRING, 100);
                 self.code.push(S_PRINT);
             } else if tokens[self.current_token_num].token_num == IDENTIFIER {
-                let mut expression_type: u8 = INT;
+                let expression_type: u8;
                 expression_type = self.change_expression_type(tokens);
                 self.expression(tokens, expression_type, 100);
                 if expression_type == INT {

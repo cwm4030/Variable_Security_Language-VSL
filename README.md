@@ -80,6 +80,18 @@ fn int:0 fibonacci(n int:0) {
     return newfib;
 }
 ```
+### Print statement
+```typescript
+fn void main() {
+    let language_name string:0 = "Variable" + " Security" + " Language";
+    let year int:0 = 2021;
+    let creator_name string:0 = "Caden Miller";
+    let random_number float:0 = 24.65;
+
+    print("The ", language_name, " was created by ", creator_name, " in ", year, ", and supports floats such as ", random_number, ".\n");
+    return;
+}
+```
 
 ## Language Rules
 1. All code must be contained within a function.
