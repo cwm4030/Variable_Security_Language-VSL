@@ -25,8 +25,8 @@ The purpose of this project is to create a new programming language that focuses
 5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
 6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
 
-### Example
-[Example Video](https://youtu.be/I007YlARifE)
+### Install and Use Tutorial Video
+[Tutorial Video](https://youtu.be/8Jw80VwTHbQ)
 
 ## Sample Code
 ### Hello World
