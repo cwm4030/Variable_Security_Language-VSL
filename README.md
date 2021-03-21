@@ -5,25 +5,25 @@ The purpose of this project is to create a new programming language that focuses
 ## How to Install and Use
 ### Windows
 1. Download the Windows binaries from releases.
-2. Download Windows terminal from the Microsoft Store (The default cmd and powershell applications are notoriously awful).
+2. Download Windows terminal from the Microsoft Store (Makes instruction comparable to other operating systems).
 3. Create a vsl file such as 'main.vsl'.
 4. Enter either some example code or code for a new program.
 5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
-6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
+6. In the directory of the binary files and source file type './vsl_vm program' in your terminal to run the program.
 
 ### Linux
 1. Download the Linux binaries from releases.
 3. Create a vsl file such as 'main.vsl'.
 4. Enter either some example code or code for a new program.
 5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
-6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
+6. In the directory of the binary files and source file type './vsl_vm program' in your terminal to run the program.
 
 ### Mac
 1. Download the Mac binaries from releases.
 3. Create a vsl file such as 'main.vsl'.
 4. Enter either some example code or code for a new program.
 5. In the directory of the binary files and source file type './vsl_compiler main.vsl' in your terminal to compile program.
-6. In the directory of the binary files and source file type './cmvm program' in your terminal to run the program.
+6. In the directory of the binary files and source file type './vsl_vm program' in your terminal to run the program.
 
 ### Install and Use Tutorial Video
 [Tutorial Video](https://youtu.be/8Jw80VwTHbQ)
@@ -49,6 +49,24 @@ fn int:0 factorial(fact int:0) {
         return 1;
     }
     return fact * factorial(fact - 1);
+}
+```
+### Leibniz formula for calculating Pi
+```typescript
+fn void main() {
+    let n int:0 = 100000000;
+    let pi float:0 = 4.0;
+    let num float:0 = 4.0;
+    let den float:0 = 3.0;
+
+    while n >= 0 {
+        num = num * -1.0;
+        pi = pi + (num / den);
+        den = den + 2.0;
+        n = n - 1;
+    }
+    print(pi, "\n");
+    return;
 }
 ```
 ### Fibonacci
