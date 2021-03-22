@@ -126,3 +126,4 @@ fn void main() {
 3. Finish string operations.
 4. Implement arrays for the int, float, and string data types. (And char indexing for string type)
 5. Implement garbage collection in the VM.
+6. Add documentation and clean up code.
