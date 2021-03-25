@@ -716,7 +716,17 @@ impl VM {
                 self.ip += 1;
                 let mut input = String::new();
                 match io::stdin().read_line(&mut input) {
-                    Ok(_x) => input.truncate(input.len() - 1),
+                    Ok(_x) => {
+                        if input.len() as i64 - 1 >= 0 {
+                            while input.chars().nth(input.len() - 1).unwrap() == '\n' ||
+                                input.chars().nth(input.len() - 1).unwrap() == '\r' {
+                                    input.pop();
+                                    if input.len() as i64 - 1 < 0 {
+                                        break;
+                                    }
+                                }
+                        }
+                    },
                     Err(_error) => input = "".to_string(),
                 }
                 if self.code[self.ip] == INT {
