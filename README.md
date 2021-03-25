@@ -39,7 +39,7 @@ fn void main() {
 ### Factorial
 ```typescript
 fn void main() {
-	print("Enter an integer below 20: \n");
+    print("Enter an integer below 20: \n");
     let fact int:0 = read();
     print("Factorial of ", fact, ": ", factorial(fact), "\n");
     return;
