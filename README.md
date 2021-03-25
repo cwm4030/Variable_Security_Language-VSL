@@ -114,12 +114,12 @@ fn void main() {
 ### Read statement
 ```typescript
 fn void main() {
-	print("What is your name?\n");
+    print("What is your name?\n");
     let name string:0 = read();
-    
+
     print("\nHow old are you?\n");
     let age int:0 = read();
-    
+
     print("\nNice to meet you ", name, ", who is ", age, " years old.\n");
     return;
 }
@@ -127,44 +127,44 @@ fn void main() {
 ### Break statement
 ```typescript
 fn void main() {
-	let n int:0 = 10;
-	let i int:0 = 10;
+    let n int:0 = 10;
+    let i int:0 = 10;
 
-	while n >= 0 {
-		print(n, "\n");
-		n = n - 1;
-		if n == 4 {
-			while i >= 0 {
-				print(i, "\n");
-				i = i - 1;
-				if i == 4 {
-					break;
-				}
-			}
-			break;
-		}
-	}
-	return;
+    while n >= 0 {
+        print(n, "\n");
+        n = n - 1;
+        if n == 4 {
+            while i >= 0 {
+                print(i, "\n");
+                i = i - 1;
+                if i == 4 {
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    return;
 }
 ```
 ### Expressions
 ```typescript
 fn void main() {
-	let n int:0 = 10;
-	let i int:0 = 10;
+    let n int:0 = 10;
+    let i int:0 = 10;
 
-	let t float:0 = 3.2;
-	let z float:0 = 4.7;
-	
-	let o string:0 = "B4e";
-	let q string:0 = "b4e";
-	
-	if n == i and t <= z and o != q or 1 == 1 {
-		print("This is true\n");
-	} else {
-		print("This is false\n");
-	}
-	return;
+    let t float:0 = 3.2;
+    let z float:0 = 4.7;
+
+    let o string:0 = "B4e";
+    let q string:0 = "b4e";
+
+    if n == i and t <= z and o != q or 1 == 1 {
+        print("This is true\n");
+    } else {
+        print("This is false\n");
+    }
+    return;
 }
 ```
 
