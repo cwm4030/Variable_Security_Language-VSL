@@ -236,6 +236,10 @@ impl Parser {
                         self.consume_token();
                     }
                     identifier = tokens[self.current_token_num].token_string.clone();
+                    if self.sl_data.contains_key(&identifier) {
+                        println!("Function name '{}' cannot be the same as a standard library function on line {}.", identifier, tokens[self.current_token_num].line_num);
+                        self.error = true;
+                    }
                     // identifier
                     self.consume_token();
                     // left parenthesis

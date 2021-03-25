@@ -1,12 +1,4 @@
 fn void main() {
-	let n int:0 = 10;
-
-	while n >= 0 {
-		print(n, "\n");
-		n = n - 1;
-		if n == 4 {
-			break;
-		}
-	}
-	return;
+    print("Hello, World!\n");
+    return;
 }
