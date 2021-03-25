@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::io;
 
 const POP: i64 = 1;
 const LOCAL_LOAD: i64 = 2;
@@ -15,43 +16,55 @@ const I_GREATER: i64 = 11;
 const I_NOT_EQUAL: i64 = 12;
 const I_LESS_EQUAL: i64 = 13;
 const I_GREATER_EQUAL: i64 = 14;
-const I_AND: i64 = 15;
-const I_OR: i64 = 16;
 
-const F_CONSTANT: i64 = 17;
-const F_ADD: i64 = 18;
-const F_SUB: i64 = 19;
-const F_MUL: i64 = 20;
-const F_DIV: i64 = 21;
-const F_EQUAL: i64 = 22;
-const F_LESS: i64 = 23;
-const F_GREATER: i64 = 24;
-const F_NOT_EQUAL: i64 = 25;
-const F_LESS_EQUAL: i64 = 26;
-const F_GREATER_EQUAL: i64 = 27;
-const F_AND: i64 = 28;
-const F_OR: i64 = 29;
+const F_CONSTANT: i64 = 15;
+const F_ADD: i64 = 16;
+const F_SUB: i64 = 17;
+const F_MUL: i64 = 18;
+const F_DIV: i64 = 19;
+const F_EQUAL: i64 = 20;
+const F_LESS: i64 = 21;
+const F_GREATER: i64 = 22;
+const F_NOT_EQUAL: i64 = 23;
+const F_LESS_EQUAL: i64 = 24;
+const F_GREATER_EQUAL: i64 = 25;
 
-const S_CONSTANT: i64 = 30;
-const S_ADD: i64 = 31;
-const S_LOAD: i64 = 32;
-const S_STORE: i64 = 33;
-//const S_JUMP_EQUAL: i64 = 34;
-//const S_JUMP_NOT_EQUAL: i64 = 35;
+const S_CONSTANT: i64 = 26;
+const S_ADD: i64 = 27;
+const S_LOAD: i64 = 28;
+const S_STORE: i64 = 29;
+const S_EQUAL: i64 = 30;
+const S_NOT_EQUAL: i64 = 31;
 
-const JUMP_IF_FALSE: i64 = 36;
-const JUMP: i64 = 37;
+const OP_AND: i64 = 32;
+const OP_OR: i64 = 33;
 
-const CALL: i64 = 38;
-const RETURN_VAL: i64 = 39;
-const RETURN_NON_VAL: i64 = 40;
-const ARG_LOAD: i64 = 41;
-const ARG_STORE: i64 = 42;
+const JUMP_IF_FALSE: i64 = 34;
+const JUMP: i64 = 35;
 
-const HALT: i64 = 43;
-const I_PRINT: i64 = 44;
-const F_PRINT: i64 = 45;
-const S_PRINT: i64 = 46;
+const CALL: i64 = 36;
+const RETURN_VAL: i64 = 37;
+const RETURN_NON_VAL: i64 = 38;
+const ARG_LOAD: i64 = 39;
+const ARG_STORE: i64 = 40;
+
+const USE: i64 = 41;
+
+const HALT: i64 = 42;
+
+//----------------------------------------------------------------------------------------------------
+
+ // data types
+ pub const INT: i64 = 0;
+ pub const FLOAT: i64 = 1;
+ pub const STRING: i64 = 2;
+
+ // functions
+ pub const PRINT: i64 = 0;
+ pub const READ: i64 = 1;
+
+
+ //---------------------------------------------------------------------------------------------------
 
 pub struct VM {
     string_constants: Vec<String>,
@@ -268,36 +281,6 @@ impl VM {
                     }
                     self.sp -= 1;
                 },
-                I_OR => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "i_or");
-                    }
-                    let a = self.stack[self.sp - 2];
-                    let b = self.stack[self.sp - 1];
-                    self.stack.pop();
-                    self.stack.pop();
-                    if a != 0 || b != 0 {
-                        self.stack.push(1);
-                    } else {
-                        self.stack.push(0);
-                    }
-                    self.sp -= 1;
-                },
-                I_AND => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "i_and");
-                    }
-                    let a = self.stack[self.sp - 2];
-                    let b = self.stack[self.sp - 1];
-                    self.stack.pop();
-                    self.stack.pop();
-                    if a != 0 && b != 0 {
-                        self.stack.push(1);
-                    } else {
-                        self.stack.push(0);
-                    }
-                    self.sp -= 1;
-                },
                 F_CONSTANT => {
                     if self.debug {
                         println!("{}: {} {}", self.ip - 1, "f_constant", f64::from_be_bytes(self.code[self.ip].to_be_bytes()));
@@ -474,42 +457,6 @@ impl VM {
                     }
                     self.sp -= 1;
                 },
-                F_OR => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "f_or");
-                    }
-                    let a_bytes = self.stack[self.sp - 2].to_be_bytes();
-                    let b_bytes = self.stack[self.sp - 1].to_be_bytes();
-                    let a = f64::from_be_bytes(a_bytes);
-                    let b = f64::from_be_bytes(b_bytes);
-                    self.stack.pop();
-                    self.stack.pop();
-                    let float_true: f64 = 1.0;
-                    if a != 0.0 || b != 0.0 {
-                        self.stack.push(i64::from_be_bytes(float_true.to_be_bytes()));
-                    } else {
-                        self.stack.push(0);
-                    }
-                    self.sp -= 1;
-                },
-                F_AND => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "f_and");
-                    }
-                    let a_bytes = self.stack[self.sp - 2].to_be_bytes();
-                    let b_bytes = self.stack[self.sp - 1].to_be_bytes();
-                    let a = f64::from_be_bytes(a_bytes);
-                    let b = f64::from_be_bytes(b_bytes);
-                    self.stack.pop();
-                    self.stack.pop();
-                    let float_true: f64 = 1.0;
-                    if a != 0.0 && b != 0.0 {
-                        self.stack.push(i64::from_be_bytes(float_true.to_be_bytes()));
-                    } else {
-                        self.stack.push(0);
-                    }
-                    self.sp -= 1;
-                }
                 S_CONSTANT => {
                     if self.debug {
                         println!("{}: {}", self.ip - 1, "s_constant");
@@ -566,6 +513,66 @@ impl VM {
                     self.stack.pop();
                     self.sp -= 1;
                     self.ip += 1;
+                },
+                S_EQUAL => {
+                    if self.debug {
+                        println!("{}: {}", self.ip - 1, "s_equal");
+                    }
+                    let a = self.stack[self.sp - 2] as usize;
+                    let b = self.stack[self.sp - 1] as usize;
+                    self.stack.pop();
+                    self.stack.pop();
+                    if self.string_constants[a] == self.string_constants[b] {
+                        self.stack.push(1);
+                    } else {
+                        self.stack.push(0);
+                    }
+                    self.sp -= 1;
+                },
+                S_NOT_EQUAL => {
+                    if self.debug {
+                        println!("{}: {}", self.ip - 1, "s_not_equal");
+                    }
+                    let a = self.stack[self.sp - 2] as usize;
+                    let b = self.stack[self.sp - 1] as usize;
+                    self.stack.pop();
+                    self.stack.pop();
+                    if self.string_constants[a] != self.string_constants[b] {
+                        self.stack.push(1);
+                    } else {
+                        self.stack.push(0);
+                    }
+                    self.sp -= 1;
+                },
+                OP_AND => {
+                    if self.debug {
+                        println!("{}: {}", self.ip - 1, "i_and");
+                    }
+                    let a = self.stack[self.sp - 2];
+                    let b = self.stack[self.sp - 1];
+                    self.stack.pop();
+                    self.stack.pop();
+                    if a != 0 && b != 0 {
+                        self.stack.push(1);
+                    } else {
+                        self.stack.push(0);
+                    }
+                    self.sp -= 1;
+                },
+                OP_OR => {
+                    if self.debug {
+                        println!("{}: {}", self.ip - 1, "i_or");
+                    }
+                    let a = self.stack[self.sp - 2];
+                    let b = self.stack[self.sp - 1];
+                    self.stack.pop();
+                    self.stack.pop();
+                    if a != 0 || b != 0 {
+                        self.stack.push(1);
+                    } else {
+                        self.stack.push(0);
+                    }
+                    self.sp -= 1;
                 },
                 JUMP_IF_FALSE => {
                     if self.debug {
@@ -661,47 +668,81 @@ impl VM {
                     self.sp -= 1;
                     self.ip += 1;
                 },
+                USE => {
+                    if self.debug {
+                        println!("{}: {} {}", self.ip - 1, "use", self.code[self.ip]);
+                    }
+                    self.standard_library();
+                },
                 HALT => {
                     if self.debug {
                         println!("{}: {}", self.ip - 1, "halt");
                     }
                     self.halt = true;
                 },
-                I_PRINT => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "i_print");
-                    }
-                    print!("{}", self.stack[self.sp - 1]);
-                    self.stack.pop();
-                    self.sp -= 1;
-                    std::io::stdout().flush().expect("Failed to flush stdout.");
-                },
-                F_PRINT => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "f_print");
-                    }
-                    let f_bytes = self.stack[self.sp - 1].to_be_bytes();
-                    print!("{}", f64::from_be_bytes(f_bytes));
-                    self.stack.pop();
-                    self.sp -= 1;
-                    std::io::stdout().flush().expect("Failed to flush stdout.");
-                },
-                S_PRINT => {
-                    if self.debug {
-                        println!("{}: {}", self.ip - 1, "s_print");
-                    }
-                    let location = self.stack[self.sp - 1] as usize;
-                    self.stack.pop();
-                    self.sp -= 1;
-                    print!("{}", self.string_constants[location]);
-                    std::io::stdout().flush().expect("Failed to flush stdout.");
-                }
                 _ => panic!("Bad Opcode: {}", opcode),
             }
             if self.debug {
                 println!("{:?} {} {}", self.stack, self.sp, self.fp);
                 println!("{:?}\n", self.string_constants);
             }
+        }
+    }
+
+    fn standard_library(&mut self) {
+        match self.code[self.ip] {
+            PRINT => {
+                self.ip += 1;
+                if self.code[self.ip] == INT {
+                    self.ip += 1;
+                    print!("{}", self.stack[self.sp - 1]);
+                    std::io::stdout().flush().expect("Failed to flush stdout.");
+                    self.stack.pop();
+                    self.sp -= 1;
+                } else if self.code[self.ip] == FLOAT {
+                    self.ip += 1;
+                    print!("{}", f64::from_be_bytes(self.stack[self.sp - 1].to_be_bytes()));
+                    self.stack.pop();
+                    self.sp -= 1;
+                } else if self.code[self.ip] == STRING {
+                    self.ip += 1;
+                    print!("{}", self.string_constants[self.stack[self.sp - 1] as usize]);
+                    std::io::stdout().flush().expect("Failed to flush stdout.");
+                    self.stack.pop();
+                    self.sp -= 1;
+                }
+            },
+            READ => {
+                self.ip += 1;
+                let mut input = String::new();
+                match io::stdin().read_line(&mut input) {
+                    Ok(_x) => input.truncate(input.len() - 1),
+                    Err(_error) => input = "".to_string(),
+                }
+                if self.code[self.ip] == INT {
+                    let result: i64;
+                    match input.parse::<i64>() {
+                        Ok(x) => result = x,
+                        Err(_error) => result = 0,
+                    }
+                    self.stack.push(result);
+                } else if self.code[self.ip] == FLOAT {
+                    let result: f64;
+                    match input.parse::<f64>() {
+                        Ok(x) => result = x,
+                        Err(_error) => result = 0.0,
+                    }
+                    self.stack.push(i64::from_be_bytes(result.to_be_bytes()));
+                } else if self.code[self.ip] == STRING {
+                    self.string_constants.push(input.clone());
+                    self.stack.push(self.string_constants.len() as i64 - 1);
+                }
+                self.sp += 1;
+                self.ip += 1;
+            },
+            _ => {
+                panic!("Standard library function does not exist.");
+            },
         }
     }
 }

@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 // literals
-pub const IDENTIFIER: u8 = 35;
-pub const INT: u8 = 36;
-pub const FLOAT: u8 = 37;
-pub const STRING: u8 = 38;
+pub const IDENTIFIER: u8 = 37;
+pub const INT: u8 = 38;
+pub const FLOAT: u8 = 39;
+pub const STRING: u8 = 40;
 
 
 pub struct Token {
@@ -91,8 +91,10 @@ pub fn lexer(source: &String) -> (Vec<Token>, bool) {
 
     // other
     lex_language.insert("void".to_string(), 32);
-    lex_language.insert("print".to_string(), 33);
-    lex_language.insert("read".to_string(), 34);
+    lex_language.insert("break".to_string(), 33);
+    lex_language.insert("vec_int".to_string(), 34);
+    lex_language.insert("vec_float".to_string(), 35);
+    lex_language.insert("vec_string".to_string(), 36);
 
     let mut single_char_tokens: HashSet<char> = HashSet::new();
     single_char_tokens.insert(';');
@@ -100,7 +102,6 @@ pub fn lexer(source: &String) -> (Vec<Token>, bool) {
     single_char_tokens.insert(')');
     single_char_tokens.insert('{');
     single_char_tokens.insert('}');
-    //single_char_tokens.insert('=');
     single_char_tokens.insert(':');
     single_char_tokens.insert(',');
     single_char_tokens.insert('[');
@@ -110,8 +111,6 @@ pub fn lexer(source: &String) -> (Vec<Token>, bool) {
     single_char_tokens.insert('/');
     single_char_tokens.insert('-');
     single_char_tokens.insert('%');
-    //single_char_tokens.insert('<');
-    //single_char_tokens.insert('>');
 
     let string = Regex::new(r"^\x22[^\x22]*\x22$").unwrap();
     let integer = Regex::new(r"^-?[0-9]+$").unwrap();

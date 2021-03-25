@@ -5,6 +5,9 @@ use std::collections::HashMap;
 #[path = "lexer.rs"]
 pub mod lexer;
 
+#[path = "standard_library.rs"]
+pub mod standard_library;
+
 const POP: i64 = 1;
 const LOCAL_LOAD: i64 = 2;
 const LOCAL_STORE: i64 = 3;
@@ -20,43 +23,41 @@ const I_GREATER: i64 = 11;
 const I_NOT_EQUAL: i64 = 12;
 const I_LESS_EQUAL: i64 = 13;
 const I_GREATER_EQUAL: i64 = 14;
-const I_AND: i64 = 15;
-const I_OR: i64 = 16;
 
-const F_CONSTANT: i64 = 17;
-const F_ADD: i64 = 18;
-const F_SUB: i64 = 19;
-const F_MUL: i64 = 20;
-const F_DIV: i64 = 21;
-const F_EQUAL: i64 = 22;
-const F_LESS: i64 = 23;
-const F_GREATER: i64 = 24;
-const F_NOT_EQUAL: i64 = 25;
-const F_LESS_EQUAL: i64 = 26;
-const F_GREATER_EQUAL: i64 = 27;
-const F_AND: i64 = 28;
-const F_OR: i64 = 29;
+const F_CONSTANT: i64 = 15;
+const F_ADD: i64 = 16;
+const F_SUB: i64 = 17;
+const F_MUL: i64 = 18;
+const F_DIV: i64 = 19;
+const F_EQUAL: i64 = 20;
+const F_LESS: i64 = 21;
+const F_GREATER: i64 = 22;
+const F_NOT_EQUAL: i64 = 23;
+const F_LESS_EQUAL: i64 = 24;
+const F_GREATER_EQUAL: i64 = 25;
 
-const S_CONSTANT: i64 = 30;
-const S_ADD: i64 = 31;
-const S_LOAD: i64 = 32;
-const S_STORE: i64 = 33;
-//const S_JUMP_EQUAL: i64 = 34;
-//const S_JUMP_NOT_EQUAL: i64 = 35;
+const S_CONSTANT: i64 = 26;
+const S_ADD: i64 = 27;
+const S_LOAD: i64 = 28;
+const S_STORE: i64 = 29;
+const S_EQUAL: i64 = 30;
+const S_NOT_EQUAL: i64 = 31;
 
-const JUMP_IF_FALSE: i64 = 36;
-const JUMP: i64 = 37;
+const OP_AND: i64 = 32;
+const OP_OR: i64 = 33;
 
-const CALL: i64 = 38;
-const RETURN_VAL: i64 = 39;
-const RETURN_NON_VAL: i64 = 40;
-const ARG_LOAD: i64 = 41;
-const ARG_STORE: i64 = 42;
+const JUMP_IF_FALSE: i64 = 34;
+const JUMP: i64 = 35;
 
-const HALT: i64 = 43;
-const I_PRINT: i64 = 44;
-const F_PRINT: i64 = 45;
-const S_PRINT: i64 = 46;
+const CALL: i64 = 36;
+const RETURN_VAL: i64 = 37;
+const RETURN_NON_VAL: i64 = 38;
+const ARG_LOAD: i64 = 39;
+const ARG_STORE: i64 = 40;
+
+const USE: i64 = 41;
+
+const HALT: i64 = 42;
 
 //----------------------------------------------------------------------------------
 
@@ -68,8 +69,6 @@ const RIGHT_CURLEY: u8 = 4;
 const EQUAL: u8 = 5;
 const COLON: u8 = 6;
 const COMMA: u8 = 7;
-//const LEFT_BRACKET: u8 = 8;
-//const RIGHT_BRACKET: u8 = 9;
 
 const ADD: u8 = 10;
 const MUL: u8 = 11;
@@ -97,13 +96,15 @@ const IF: u8 = 30;
 const ELSE: u8 = 31;
 
 const VOID: u8 = 32;
-const PRINT: u8 = 33;
-//const READ: u8 = 34;
+const BREAK: u8 = 33;
+//const VEC_INT: u8 = 34;
+//const VEC_FLOAT: u8 = 35;
+//const VEC_STRING: u8 = 36;
 
-const IDENTIFIER: u8 = 35;
-const INT: u8 = 36;
-const FLOAT: u8 = 37;
-const STRING: u8 = 38;
+const IDENTIFIER: u8 = 37;
+const INT: u8 = 38;
+const FLOAT: u8 = 39;
+const STRING: u8 = 40;
 
 //----------------------------------------------------------------------------------
 
@@ -139,6 +140,8 @@ pub struct Parser {
     current_fn_name: String,
     return_num: i64,
     current_scope: i64,
+    sl_data: HashMap<String, standard_library::SlData>,
+    loop_nest_num: i64,
 }
 
 impl Parser {
@@ -155,6 +158,8 @@ impl Parser {
             current_fn_name: String::new(),
             return_num: 0,
             current_scope: -1,
+            sl_data: standard_library::get_sl_data(),
+            loop_nest_num: 0,
         };
         parser
     }
@@ -328,41 +333,42 @@ impl Parser {
                 IDENTIFIER => {
                     self.consume_token();
                     if tokens[self.current_token_num].token_num != LEFT_PARENTHESIS {
-                        instruction_counter += 2
+                        instruction_counter += 2;
                     } else if tokens[self.current_token_num].token_num == LEFT_PARENTHESIS {
-                        instruction_counter += 3;
-                    }
-                },
-                PRINT => {
-                    self.consume_token();
-                    // counting by commas so always add one
-                    instruction_counter +=1;
-
-                    let mut tmp_current_token_num = self.current_token_num;
-                    let last_token_num = tokens.len();
-                    while tmp_current_token_num < last_token_num && tokens[tmp_current_token_num].token_num != SEMI_COLON {
-                        if tokens[tmp_current_token_num].token_num == IDENTIFIER {
-                            tmp_current_token_num += 1;
-                            if tmp_current_token_num < last_token_num && tokens[tmp_current_token_num].token_num == LEFT_PARENTHESIS {
-                                let mut num_parenthesis: i64 = 1;
-                                tmp_current_token_num += 1;
-                                while num_parenthesis != 0 && tmp_current_token_num < last_token_num {
-                                    if tokens[tmp_current_token_num].token_num == LEFT_PARENTHESIS {
-                                        num_parenthesis += 1;
+                        if self.sl_data.contains_key(&tokens[self.current_token_num - 1].token_string) {
+                            if tokens[self.current_token_num - 1].token_string == "print".to_string() {
+                                instruction_counter += 3;
+                                let mut tmp_current_token_num = self.current_token_num;
+                                while tmp_current_token_num < self.num_tokens && tokens[tmp_current_token_num].token_num != SEMI_COLON {
+                                    if tokens[tmp_current_token_num].token_num == IDENTIFIER {
                                         tmp_current_token_num += 1;
-                                    } else if tokens[tmp_current_token_num].token_num == RIGHT_PARENTHESIS {
-                                        num_parenthesis -= 1;
-                                        tmp_current_token_num += 1;
-                                    } else {
-                                        tmp_current_token_num += 1;
+                                        if tmp_current_token_num < self.num_tokens && tokens[tmp_current_token_num].token_num == LEFT_PARENTHESIS {
+                                            let mut num_parenthesis: i64 = 1;
+                                            tmp_current_token_num += 1;
+                                            while num_parenthesis != 0 && tmp_current_token_num < self.num_tokens {
+                                                if tokens[tmp_current_token_num].token_num == LEFT_PARENTHESIS {
+                                                    num_parenthesis += 1;
+                                                    tmp_current_token_num += 1;
+                                                } else if tokens[tmp_current_token_num].token_num == RIGHT_PARENTHESIS {
+                                                    num_parenthesis -= 1;
+                                                    tmp_current_token_num += 1;
+                                                } else {
+                                                    tmp_current_token_num += 1;
+                                                }
+                                            }
+                                        }
                                     }
+                                    if tmp_current_token_num < self.num_tokens && tokens[tmp_current_token_num].token_num == COMMA {
+                                        instruction_counter += 3;
+                                    }
+                                    tmp_current_token_num += 1;
                                 }
+                            } else if tokens[self.current_token_num - 1].token_string == "read".to_string() {
+                                instruction_counter += 3;
                             }
+                        } else {
+                            instruction_counter += 3;
                         }
-                        if tmp_current_token_num < last_token_num && tokens[tmp_current_token_num].token_num == COMMA {
-                            instruction_counter += 1;
-                        }
-                        tmp_current_token_num += 1;
                     }
                 },
                 ADD => {
@@ -554,14 +560,15 @@ impl Parser {
         }
         self.return_num = 0;
         let mut locals: Vec<i64> = Vec::new();
-        self.block(tokens, &mut locals);
+        let mut breaks: Vec<i64> = Vec::new();
+        self.block(tokens, &mut locals, &mut breaks);
         if self.return_num == 0 {
             println!("Function '{}' has no return statement.", self.current_fn_name);
             self.error = true;
         }
     }
 
-    fn block(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
+    fn block(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>, breaks: &mut Vec<i64>) {
         self.left_curley(tokens);
         self.current_scope += 1;
         while self.is_last_token() == false && tokens[self.current_token_num].token_num != RIGHT_CURLEY {
@@ -576,8 +583,20 @@ impl Parser {
                             self.var_def(tokens);
                             self.semi_colon(tokens);
                         } else if tokens[self.current_token_num + 1].token_num == LEFT_PARENTHESIS {
-                            self.fn_call(tokens);
-                            self.semi_colon(tokens);
+                            match self.sl_data.get(&tokens[self.current_token_num].token_string) {
+                                Some(x) => {
+                                    if x.return_type != standard_library::VOID {
+                                        println!("Function not within an expression must be void on line {}.", tokens[self.current_token_num].line_num);
+                                        self.error = true;
+                                    }
+                                    self.sl_use(tokens, standard_library::VOID);
+                                    self.semi_colon(tokens);
+                                },
+                                None => {
+                                    self.fn_call(tokens);
+                                    self.semi_colon(tokens);
+                                },
+                            }
                         }
                     } else {
                         println!("Program suddenly ended on line {}.", tokens[self.current_token_num].line_num);
@@ -585,13 +604,17 @@ impl Parser {
                     }
                 },
                 IF => {
-                    self.if_statement(tokens, locals);
+                    self.if_statement(tokens, locals, breaks);
                 },
                 WHILE => {
                     self.while_statement(tokens, locals);
                 },
-                PRINT => {
-                    self.print_statement(tokens);
+                BREAK => {
+                    if self.loop_nest_num == 0 {
+                        println!("Cannot break out of a non loop on line {}.", tokens[self.current_token_num].line_num);
+                        self.error = true;
+                    }
+                    self.break_statement(tokens, breaks);
                     self.semi_colon(tokens);
                 },
                 RETURN => {
@@ -763,16 +786,6 @@ impl Parser {
         }
     }
 
-    fn print(&mut self, tokens: &Vec<lexer::Token>) {
-        if tokens[self.current_token_num].token_num != PRINT {
-            println!("Expected 'print', got '{}' on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
-            self.error = true;
-            self.consume_token();
-        } else {
-            self.consume_token();
-        }
-    }
-
     fn return_keyword(&mut self, tokens: &Vec<lexer::Token>) {
         if tokens[self.current_token_num].token_num != RETURN {
             println!("Expected 'return', got '{}' on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
@@ -813,6 +826,16 @@ impl Parser {
         }
     }
 
+    fn break_keyword(&mut self, tokens: &Vec<lexer::Token>) {
+        if tokens[self.current_token_num].token_num != BREAK {
+            println!("Expected 'break', got '{}' on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
+            self.error = true;
+            self.consume_token();
+        } else {
+            self.consume_token();
+        }
+    }
+
 
 
 
@@ -832,138 +855,123 @@ impl Parser {
     // Expression Code
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    fn string_expression(&mut self, tokens: &Vec<lexer::Token>, expression_type: u8, variable_security: i64) {
-        let mut num_strings = 0;
-            loop {
-                if tokens[self.current_token_num].token_num == STRING {
-                    num_strings += 1;
-                    self.string_constant(tokens);
-                } else if tokens[self.current_token_num].token_num == IDENTIFIER {
-                    num_strings += 1;
-                    if self.current_token_num + 1 < tokens.len() {
-                        // identifier is a function
-                        if tokens[self.current_token_num + 1].token_num == LEFT_PARENTHESIS {
-                            self.identifier_function(tokens, expression_type, variable_security);
-                            // identifier is a variable
-                        } else if tokens[self.current_token_num + 1].token_num != LEFT_PARENTHESIS {
-                            self.identifier_variable(tokens, expression_type, variable_security);
-                        }
-                    }
-                } else {
-                    println!("Expected either string or identifier, got '{}' on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
+    fn drain_expression_stack(&mut self, tokens: &Vec<lexer::Token>, expression_type: u8, expression_stack: &mut Vec<u8>) {
+        let or = 1;
+            let and = 2;
+            let equal_equal = 3;
+            let not_equal = 4;
+            let less = 5;
+            let greater = 6;
+            let less_equal = 7;
+            let greater_equal = 8;
+            let add = 9;
+            let sub = 10;
+            let mul = 11;
+            let div = 12;
+        while expression_stack.is_empty() == false {
+            if expression_stack[expression_stack.len() - 1] == div {
+                if expression_type == INT {
+                    self.code.push(I_DIV);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_DIV);
+                } else if expression_type == STRING {
+                    println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
-                    self.consume_token();
                 }
-                if num_strings == 2 {
+            } else if expression_stack[expression_stack.len() - 1] == mul {
+                if expression_type == INT {
+                    self.code.push(I_MUL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_MUL);
+                } else if expression_type == STRING {
+                    println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+            } else if expression_stack[expression_stack.len() - 1] == sub {
+                if expression_type == INT {
+                    self.code.push(I_SUB);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_SUB);
+                } else if expression_type == STRING {
+                    println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+            } else if expression_stack[expression_stack.len() - 1] == add {
+                if expression_type == INT {
+                    self.code.push(I_ADD);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_ADD);
+                } else if expression_type == STRING {
                     self.code.push(S_ADD);
-                    num_strings = 1;
                 }
-                if tokens[self.current_token_num].token_num != ADD {
-                    break;
-                } else {
-                    self.consume_token();
+            } else if expression_stack[expression_stack.len() - 1] == greater_equal {
+                if expression_type == INT {
+                    self.code.push(I_GREATER_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_GREATER_EQUAL);
+                } else if expression_type == STRING {
+                    println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
                 }
+            } else if expression_stack[expression_stack.len() - 1] == less_equal {
+                if expression_type == INT {
+                    self.code.push(I_LESS_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_LESS_EQUAL);
+                } else if expression_type == STRING {
+                    println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+            } else if expression_stack[expression_stack.len() - 1] == greater {
+                if expression_type == INT {
+                    self.code.push(I_GREATER);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_GREATER);
+                } else if expression_type == STRING {
+                    println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+            } else if expression_stack[expression_stack.len() - 1] == less {
+                if expression_type == INT {
+                    self.code.push(I_LESS);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_LESS);
+                } else if expression_type == STRING {
+                    println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+            } else if expression_stack[expression_stack.len() - 1] == equal_equal {
+                if expression_type == INT {
+                    self.code.push(I_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_EQUAL);
+                } else if expression_type == STRING {
+                    self.code.push(S_EQUAL);
+                }
+            } else if expression_stack[expression_stack.len() - 1] == not_equal {
+                if expression_type == INT {
+                    self.code.push(I_NOT_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_NOT_EQUAL);
+                } else if expression_type == STRING {
+                    self.code.push(S_NOT_EQUAL);
+                }
+            } else if expression_stack[expression_stack.len() - 1] == and {
+                self.code.push(OP_AND);
+            } else if expression_stack[expression_stack.len() - 1] == or {
+                self.code.push(OP_OR);
             }
+            expression_stack.pop();
+        }
     }
 
     fn expression(&mut self, tokens: &Vec<lexer::Token>, expression_type: u8, variable_security: i64) {
         let mut expression_stack: Vec<u8> = Vec::new();
-        if expression_type == INT || expression_type == FLOAT {
-            self.term(tokens, &mut expression_stack, expression_type, variable_security);
-            while expression_stack.is_empty() == false {
-                let or = 1;
-                let and = 2;
-                let equal_equal = 3;
-                let not_equal = 4;
-                let less = 5;
-                let greater = 6;
-                let less_equal = 7;
-                let greater_equal = 8;
-                let add = 9;
-                let sub = 10;
-                let mul = 11;
-                let div = 12;
-                if expression_stack[expression_stack.len() - 1] == div {
-                    if expression_type == INT {
-                        self.code.push(I_DIV);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_DIV);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == mul {
-                    if expression_type == INT {
-                        self.code.push(I_MUL);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_MUL);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == sub {
-                    if expression_type == INT {
-                        self.code.push(I_SUB);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_SUB);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == add {
-                    if expression_type == INT {
-                        self.code.push(I_ADD);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_ADD);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == greater_equal {
-                    if expression_type == INT {
-                        self.code.push(I_GREATER_EQUAL);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_GREATER_EQUAL);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == less_equal {
-                    if expression_type == INT {
-                        self.code.push(I_LESS_EQUAL);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_LESS_EQUAL);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == greater {
-                    if expression_type == INT {
-                        self.code.push(I_GREATER);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_GREATER);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == less {
-                    if expression_type == INT {
-                        self.code.push(I_LESS);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_LESS);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == equal_equal {
-                    if expression_type == INT {
-                        self.code.push(I_EQUAL);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_EQUAL);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == not_equal {
-                    if expression_type == INT {
-                        self.code.push(I_NOT_EQUAL);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_NOT_EQUAL);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == and {
-                    if expression_type == INT {
-                        self.code.push(I_AND);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_AND);
-                    }
-                } else if expression_stack[expression_stack.len() - 1] == or {
-                    if expression_type == INT {
-                        self.code.push(I_OR);
-                    } else if expression_type == FLOAT {
-                        self.code.push(F_OR);
-                    }
-                }
-                expression_stack.pop();
-            }
-        } else if expression_type == STRING {
-            self.string_expression(tokens, expression_type, variable_security);
-        }
+        self.term(tokens, &mut expression_stack, expression_type, variable_security);
+        self.drain_expression_stack(tokens, expression_type, &mut expression_stack);
     }
 
-    fn multiplicative_precedence(&mut self, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn multiplicative_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let mul = 11;
         let div = 12;
         if expression_stack[expression_stack.len() - 1] == div {
@@ -971,6 +979,9 @@ impl Parser {
                 self.code.push(I_DIV);
             } else if expression_type == FLOAT {
                 self.code.push(F_DIV);
+            } else if expression_type == STRING {
+                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -979,6 +990,9 @@ impl Parser {
                 self.code.push(I_MUL);
             } else if expression_type == FLOAT {
                 self.code.push(F_MUL);
+            } else if expression_type == STRING {
+                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -987,7 +1001,7 @@ impl Parser {
         }
     }
 
-    fn additive_precedence(&mut self, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn additive_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let add = 9;
         let sub = 10;
         let mul = 11;
@@ -997,6 +1011,9 @@ impl Parser {
                 self.code.push(I_DIV);
             } else if expression_type == FLOAT {
                 self.code.push(F_DIV);
+            } else if expression_type == STRING {
+                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1005,6 +1022,9 @@ impl Parser {
                 self.code.push(I_MUL);
             } else if expression_type == FLOAT {
                 self.code.push(F_MUL);
+            } else if expression_type == STRING {
+                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1013,6 +1033,9 @@ impl Parser {
                 self.code.push(I_SUB);
             } else if expression_type == FLOAT {
                 self.code.push(F_SUB);
+            } else if expression_type == STRING {
+                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1021,6 +1044,8 @@ impl Parser {
                 self.code.push(I_ADD);
             } else if expression_type == FLOAT {
                 self.code.push(F_ADD);
+            } else if expression_type == STRING {
+                self.code.push(S_ADD);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1029,7 +1054,7 @@ impl Parser {
         }
     }
 
-    fn relational_precedence(&mut self, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn relational_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let less = 5;
         let greater = 6;
         let less_equal = 7;
@@ -1043,6 +1068,9 @@ impl Parser {
                 self.code.push(I_DIV);
             } else if expression_type == FLOAT {
                 self.code.push(F_DIV);
+            } else if expression_type == STRING {
+                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1051,6 +1079,9 @@ impl Parser {
                 self.code.push(I_MUL);
             } else if expression_type == FLOAT {
                 self.code.push(F_MUL);
+            } else if expression_type == STRING {
+                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1059,6 +1090,9 @@ impl Parser {
                 self.code.push(I_SUB);
             } else if expression_type == FLOAT {
                 self.code.push(F_SUB);
+            } else if expression_type == STRING {
+                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1067,6 +1101,8 @@ impl Parser {
                 self.code.push(I_ADD);
             } else if expression_type == FLOAT {
                 self.code.push(F_ADD);
+            } else if expression_type == STRING {
+                self.code.push(S_ADD);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1075,6 +1111,9 @@ impl Parser {
                 self.code.push(I_GREATER_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1083,6 +1122,9 @@ impl Parser {
                 self.code.push(I_LESS_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1091,6 +1133,9 @@ impl Parser {
                 self.code.push(I_GREATER);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1099,6 +1144,9 @@ impl Parser {
                 self.code.push(I_LESS);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS);
+            } else if expression_type == STRING {
+                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1107,7 +1155,7 @@ impl Parser {
         }
     }
 
-    fn equality_precedence(&mut self, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn equality_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let equal_equal = 3;
         let not_equal = 4;
         let less = 5;
@@ -1123,6 +1171,9 @@ impl Parser {
                 self.code.push(I_DIV);
             } else if expression_type == FLOAT {
                 self.code.push(F_DIV);
+            } else if expression_type == STRING {
+                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1131,6 +1182,9 @@ impl Parser {
                 self.code.push(I_MUL);
             } else if expression_type == FLOAT {
                 self.code.push(F_MUL);
+            } else if expression_type == STRING {
+                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1139,6 +1193,9 @@ impl Parser {
                 self.code.push(I_SUB);
             } else if expression_type == FLOAT {
                 self.code.push(F_SUB);
+            } else if expression_type == STRING {
+                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1147,6 +1204,8 @@ impl Parser {
                 self.code.push(I_ADD);
             } else if expression_type == FLOAT {
                 self.code.push(F_ADD);
+            } else if expression_type == STRING {
+                self.code.push(S_ADD);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1155,6 +1214,9 @@ impl Parser {
                 self.code.push(I_GREATER_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1163,6 +1225,9 @@ impl Parser {
                 self.code.push(I_LESS_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1171,6 +1236,9 @@ impl Parser {
                 self.code.push(I_GREATER);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1179,6 +1247,9 @@ impl Parser {
                 self.code.push(I_LESS);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS);
+            } else if expression_type == STRING {
+                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1187,6 +1258,8 @@ impl Parser {
                 self.code.push(I_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_EQUAL);
+            } else if expression_type == STRING {
+                self.code.push(S_EQUAL);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1195,6 +1268,8 @@ impl Parser {
                 self.code.push(I_NOT_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_NOT_EQUAL);
+            } else if expression_type == STRING {
+                self.code.push(S_NOT_EQUAL);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1203,7 +1278,7 @@ impl Parser {
         }
     }
 
-    fn and_precendence(&mut self, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn and_precendence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let and = 2;
         let equal_equal = 3;
         let not_equal = 4;
@@ -1220,6 +1295,9 @@ impl Parser {
                 self.code.push(I_DIV);
             } else if expression_type == FLOAT {
                 self.code.push(F_DIV);
+            } else if expression_type == STRING {
+                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1228,6 +1306,9 @@ impl Parser {
                 self.code.push(I_MUL);
             } else if expression_type == FLOAT {
                 self.code.push(F_MUL);
+            } else if expression_type == STRING {
+                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1236,6 +1317,9 @@ impl Parser {
                 self.code.push(I_SUB);
             } else if expression_type == FLOAT {
                 self.code.push(F_SUB);
+            } else if expression_type == STRING {
+                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1244,6 +1328,8 @@ impl Parser {
                 self.code.push(I_ADD);
             } else if expression_type == FLOAT {
                 self.code.push(F_ADD);
+            } else if expression_type == STRING {
+                self.code.push(S_ADD);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1252,6 +1338,9 @@ impl Parser {
                 self.code.push(I_GREATER_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1260,6 +1349,9 @@ impl Parser {
                 self.code.push(I_LESS_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1268,6 +1360,9 @@ impl Parser {
                 self.code.push(I_GREATER);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1276,6 +1371,9 @@ impl Parser {
                 self.code.push(I_LESS);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS);
+            } else if expression_type == STRING {
+                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1284,6 +1382,8 @@ impl Parser {
                 self.code.push(I_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_EQUAL);
+            } else if expression_type == STRING {
+                self.code.push(S_EQUAL);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1292,15 +1392,13 @@ impl Parser {
                 self.code.push(I_NOT_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_NOT_EQUAL);
+            } else if expression_type == STRING {
+                self.code.push(S_NOT_EQUAL);
             }
             expression_stack.pop();
             expression_stack.push(value);
         } else if expression_stack[expression_stack.len() - 1] == and {
-            if expression_type == INT {
-                self.code.push(I_AND);
-            } else if expression_type == FLOAT {
-                self.code.push(F_AND);
-            }
+            self.code.push(OP_AND);
             expression_stack.pop();
             expression_stack.push(value);
         } else {
@@ -1308,7 +1406,7 @@ impl Parser {
         }
     }
 
-    fn or_precedence(&mut self, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn or_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let or = 1;
         let and = 2;
         let equal_equal = 3;
@@ -1326,6 +1424,9 @@ impl Parser {
                 self.code.push(I_DIV);
             } else if expression_type == FLOAT {
                 self.code.push(F_DIV);
+            } else if expression_type == STRING {
+                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1334,6 +1435,9 @@ impl Parser {
                 self.code.push(I_MUL);
             } else if expression_type == FLOAT {
                 self.code.push(F_MUL);
+            } else if expression_type == STRING {
+                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1342,6 +1446,9 @@ impl Parser {
                 self.code.push(I_SUB);
             } else if expression_type == FLOAT {
                 self.code.push(F_SUB);
+            } else if expression_type == STRING {
+                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1350,6 +1457,8 @@ impl Parser {
                 self.code.push(I_ADD);
             } else if expression_type == FLOAT {
                 self.code.push(F_ADD);
+            } else if expression_type == STRING {
+                self.code.push(S_ADD);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1358,6 +1467,9 @@ impl Parser {
                 self.code.push(I_GREATER_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1366,6 +1478,9 @@ impl Parser {
                 self.code.push(I_LESS_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS_EQUAL);
+            } else if expression_type == STRING {
+                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1374,6 +1489,9 @@ impl Parser {
                 self.code.push(I_GREATER);
             } else if expression_type == FLOAT {
                 self.code.push(F_GREATER);
+            } else if expression_type == STRING {
+                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1382,6 +1500,9 @@ impl Parser {
                 self.code.push(I_LESS);
             } else if expression_type == FLOAT {
                 self.code.push(F_LESS);
+            } else if expression_type == STRING {
+                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                self.error = true;
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1390,6 +1511,8 @@ impl Parser {
                 self.code.push(I_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_EQUAL);
+            } else if expression_type == STRING {
+                self.code.push(S_EQUAL);
             }
             expression_stack.pop();
             expression_stack.push(value);
@@ -1398,23 +1521,17 @@ impl Parser {
                 self.code.push(I_NOT_EQUAL);
             } else if expression_type == FLOAT {
                 self.code.push(F_NOT_EQUAL);
+            } else if expression_type == STRING {
+                self.code.push(S_NOT_EQUAL);
             }
             expression_stack.pop();
             expression_stack.push(value);
         } else if expression_stack[expression_stack.len() - 1] == and {
-            if expression_type == INT {
-                self.code.push(I_AND);
-            } else if expression_type == FLOAT {
-                self.code.push(F_AND);
-            }
+            self.code.push(OP_AND);
             expression_stack.pop();
             expression_stack.push(value);
         } else if expression_stack[expression_stack.len() - 1] == or {
-            if expression_type == INT {
-                self.code.push(I_OR);
-            } else if expression_type == FLOAT {
-                self.code.push(F_OR);
-            }
+            self.code.push(OP_OR);
             expression_stack.pop();
             expression_stack.push(value);
         }
@@ -1475,7 +1592,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(div);
                     } else {
-                        self.multiplicative_precedence(expression_stack, expression_type, div);
+                        self.multiplicative_precedence(tokens, expression_stack, expression_type, div);
                     }
                 },
                 MUL => {
@@ -1483,7 +1600,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(mul);
                     } else {
-                        self.multiplicative_precedence(expression_stack, expression_type, mul);
+                        self.multiplicative_precedence(tokens, expression_stack, expression_type, mul);
                     }
                 },
                 SUB => {
@@ -1491,7 +1608,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(sub);
                     } else {
-                        self.additive_precedence(expression_stack, expression_type, sub);
+                        self.additive_precedence(tokens, expression_stack, expression_type, sub);
                     }
                 },
                 ADD => {
@@ -1499,7 +1616,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(add);
                     } else {
-                        self.additive_precedence(expression_stack, expression_type, add);
+                        self.additive_precedence(tokens, expression_stack, expression_type, add);
                     }
                 },
                 GREATER_EQUAL => {
@@ -1507,7 +1624,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(greater_equal);
                     } else {
-                        self.relational_precedence(expression_stack, expression_type, greater_equal);
+                        self.relational_precedence(tokens, expression_stack, expression_type, greater_equal);
                     }
                 },
                 LESS_EQUAL => {
@@ -1515,7 +1632,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(less_equal);
                     } else {
-                        self.relational_precedence(expression_stack, expression_type, less_equal);
+                        self.relational_precedence(tokens, expression_stack, expression_type, less_equal);
                     }
                 },
                 GREATER => {
@@ -1523,7 +1640,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(greater);
                     } else {
-                        self.relational_precedence(expression_stack, expression_type, greater);
+                        self.relational_precedence(tokens, expression_stack, expression_type, greater);
                     }
                 },
                 LESS => {
@@ -1531,7 +1648,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(less);
                     } else {
-                        self.relational_precedence(expression_stack, expression_type, less);
+                        self.relational_precedence(tokens, expression_stack, expression_type, less);
                     }
                 },
                 NOT_EQUAL => {
@@ -1539,7 +1656,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(not_equal);
                     } else {
-                        self.equality_precedence(expression_stack, expression_type, not_equal);
+                        self.equality_precedence(tokens, expression_stack, expression_type, not_equal);
                     }
                 },
                 EQUAL_EQUAL => {
@@ -1547,7 +1664,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(equal_equal);
                     } else {
-                        self.equality_precedence(expression_stack, expression_type, equal_equal);
+                        self.equality_precedence(tokens, expression_stack, expression_type, equal_equal);
                     }
                 },
                 AND => {
@@ -1555,8 +1672,9 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(and);
                     } else {
-                        self.and_precendence(expression_stack, expression_type, and);
+                        self.and_precendence(tokens, expression_stack, expression_type, and);
                     }
+                    self.drain_expression_stack(tokens, expression_type, expression_stack);
                     expression_type = self.change_expression_type(tokens);
                 },
                 OR => {
@@ -1564,8 +1682,9 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(or);
                     } else {
-                        self.or_precedence(expression_stack, expression_type, or);
+                        self.or_precedence(tokens, expression_stack, expression_type, or);
                     }
+                    self.drain_expression_stack(tokens, expression_type, expression_stack);
                     expression_type = self.change_expression_type(tokens);
                 },
                 _ => break,
@@ -1585,11 +1704,42 @@ impl Parser {
             self.code.push(i64::from_be_bytes(f64::to_be_bytes(tokens[self.current_token_num].token_string.parse::<f64>().expect("Failed to parse float."))));
             self.consume_token();
             return;
+        } else if tokens[self.current_token_num].token_num == STRING && expression_type == STRING {
+            self.string_constant(tokens);
+            return;
         } else if tokens[self.current_token_num].token_num == IDENTIFIER {
             if self.current_token_num + 1 < tokens.len() {
                 // identifier is a function
                 if tokens[self.current_token_num + 1].token_num == LEFT_PARENTHESIS {
-                    self.identifier_function(tokens, expression_type, variable_security);
+                    match self.sl_data.get(&tokens[self.current_token_num].token_string) {
+                        Some(x) => {
+                            if x.return_type == standard_library::INT && expression_type != INT {
+                                println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
+                                self.error = true;
+                            } else if x.return_type == standard_library::FLOAT && expression_type != FLOAT {
+                                println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
+                                self.error = true;
+                            } else if x.return_type == standard_library::STRING && expression_type != STRING {
+                                println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
+                                self.error = true;
+                            }
+
+                            let return_type: i64;
+                            if expression_type == INT {
+                                return_type = standard_library::INT;
+                            } else if expression_type == FLOAT {
+                                return_type = standard_library::FLOAT;
+                            } else if expression_type == STRING {
+                                return_type = standard_library::STRING;
+                            } else {
+                                return_type = standard_library::VOID;
+                            }
+                            self.sl_use(tokens, return_type);
+                        },
+                        None => {
+                            self.identifier_function(tokens, expression_type, variable_security);
+                        }
+                    }
                     return;
                     // identifier is a variable
                 } else if tokens[self.current_token_num + 1].token_num != LEFT_PARENTHESIS {
@@ -1642,7 +1792,7 @@ impl Parser {
     // Code Generation... Kinda (It's mixed with the parsing code for statements)
     // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    fn if_statement(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>) {
+    fn if_statement(&mut self, tokens: &Vec<lexer::Token>, locals: &mut Vec<i64>, breaks: &mut Vec<i64>) {
         let mut end_of_if_jump_locations: Vec<i64> = Vec::new();
         loop {
             self.if_keyword(tokens);
@@ -1653,7 +1803,7 @@ impl Parser {
             self.code.push(JUMP_IF_FALSE);
             let code_location = self.code.len();
             self.code.push(0);
-            self.block(tokens, locals);
+            self.block(tokens, locals, breaks);
             self.code.push(JUMP);
             end_of_if_jump_locations.push(self.code.len() as i64);
             self.code.push(0);
@@ -1665,7 +1815,7 @@ impl Parser {
             } else {
                 self.else_keyword(tokens);
                 if tokens[self.current_token_num].token_num == LEFT_CURLEY {
-                    self.block(tokens, locals);
+                    self.block(tokens, locals, breaks);
                     break;
                 }
             }
@@ -1685,11 +1835,24 @@ impl Parser {
         self.code.push(JUMP_IF_FALSE);
         let code_location = self.code.len();
         self.code.push(0);
-        self.block(tokens, locals);
+        let mut breaks: Vec<i64> = Vec::new();
+        self.loop_nest_num += 1;
+        self.block(tokens, locals, &mut breaks);
+        self.loop_nest_num -= 1;
         self.code.push(JUMP);
         self.code.push(begin_location);
         let jump_location = self.code.len() as i64;
         self.code[code_location] = jump_location;
+        for break_statement in breaks {
+            self.code[break_statement as usize] = jump_location;
+        }
+    }
+
+    fn break_statement(&mut self, tokens: &Vec<lexer::Token>, breaks: &mut Vec<i64>) {
+        self.break_keyword(tokens);
+        self.code.push(JUMP);
+        breaks.push(self.code.len() as i64);
+        self.code.push(0);
     }
 
     fn var_def(&mut self, tokens: &Vec<lexer::Token>) {
@@ -1912,43 +2075,64 @@ impl Parser {
         }
     }
 
-    fn print_statement(&mut self, tokens: &Vec<lexer::Token>) {
-        self.print(tokens);
-        self.left_parenthesis(tokens);
+    fn sl_use(&mut self, tokens: &Vec<lexer::Token>, expression_type: i64) {
+        if tokens[self.current_token_num].token_string == "print" {
+            self.consume_token();
+            self.left_parenthesis(tokens);
 
-        loop {
-            if tokens[self.current_token_num].token_num == INT {
-                self.expression(tokens, INT, 100);
-                self.code.push(I_PRINT);
-            } else if tokens[self.current_token_num].token_num == FLOAT {
-                self.expression(tokens, FLOAT, 100);
-                self.code.push(F_PRINT);
-            } else if tokens[self.current_token_num].token_num == STRING {
-                self.expression(tokens, STRING, 100);
-                self.code.push(S_PRINT);
-            } else if tokens[self.current_token_num].token_num == IDENTIFIER {
-                let expression_type: u8;
-                expression_type = self.change_expression_type(tokens);
-                self.expression(tokens, expression_type, 100);
-                if expression_type == INT {
-                    self.code.push(I_PRINT);
-                } else if expression_type == FLOAT {
-                    self.code.push(F_PRINT);
-                } else if expression_type == STRING {
-                    self.code.push(S_PRINT);
+            loop {
+                if tokens[self.current_token_num].token_num == INT {
+                    self.expression(tokens, INT, 100);
+                    self.code.push(USE);
+                    self.code.push(standard_library::PRINT);
+                    self.code.push(standard_library::INT);
+                } else if tokens[self.current_token_num].token_num == FLOAT {
+                    self.expression(tokens, FLOAT, 100);
+                    self.code.push(USE);
+                    self.code.push(standard_library::PRINT);
+                    self.code.push(standard_library::FLOAT);
+                } else if tokens[self.current_token_num].token_num == STRING {
+                    self.expression(tokens, STRING, 100);
+                    self.code.push(USE);
+                    self.code.push(standard_library::PRINT);
+                    self.code.push(standard_library::STRING);
+                } else if tokens[self.current_token_num].token_num == IDENTIFIER {
+                    let expression_type: u8;
+                    expression_type = self.change_expression_type(tokens);
+                    self.expression(tokens, expression_type, 100);
+                    if expression_type == INT {
+                        self.code.push(USE);
+                        self.code.push(standard_library::PRINT);
+                        self.code.push(standard_library::INT);
+                    } else if expression_type == FLOAT {
+                        self.code.push(USE);
+                        self.code.push(standard_library::PRINT);
+                        self.code.push(standard_library::FLOAT);
+                    } else if expression_type == STRING {
+                        self.code.push(USE);
+                        self.code.push(standard_library::PRINT);
+                        self.code.push(standard_library::STRING);
+                    }
+                } else {
+                    println!("Unknown token '{}', expected beginning of expression on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
+                    self.error = true;
                 }
-            } else {
-                println!("Unknown token '{}', expected beginning of expression on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
-                self.error = true;
+                if tokens[self.current_token_num].token_num != COMMA {
+                    break;
+                } else {
+                    self.comma(tokens);
+                }
             }
-            if tokens[self.current_token_num].token_num != COMMA {
-                break;
-            } else {
-                self.comma(tokens);
-            }
+    
+            self.right_parenthesis(tokens);
+        } else if tokens[self.current_token_num].token_string == "read" {
+            self.consume_token();
+            self.left_parenthesis(tokens);
+            self.right_parenthesis(tokens);
+            self.code.push(USE);
+            self.code.push(standard_library::READ);
+            self.code.push(expression_type);
         }
-
-        self.right_parenthesis(tokens);
     }
 
     fn identifier_function(&mut self, tokens: &Vec<lexer::Token>, expression_type: u8, variable_security: i64) {

@@ -13,43 +13,41 @@ const I_GREATER: i64 = 11;
 const I_NOT_EQUAL: i64 = 12;
 const I_LESS_EQUAL: i64 = 13;
 const I_GREATER_EQUAL: i64 = 14;
-const I_AND: i64 = 15;
-const I_OR: i64 = 16;
 
-const F_CONSTANT: i64 = 17;
-const F_ADD: i64 = 18;
-const F_SUB: i64 = 19;
-const F_MUL: i64 = 20;
-const F_DIV: i64 = 21;
-const F_EQUAL: i64 = 22;
-const F_LESS: i64 = 23;
-const F_GREATER: i64 = 24;
-const F_NOT_EQUAL: i64 = 25;
-const F_LESS_EQUAL: i64 = 26;
-const F_GREATER_EQUAL: i64 = 27;
-const F_AND: i64 = 28;
-const F_OR: i64 = 29;
+const F_CONSTANT: i64 = 15;
+const F_ADD: i64 = 16;
+const F_SUB: i64 = 17;
+const F_MUL: i64 = 18;
+const F_DIV: i64 = 19;
+const F_EQUAL: i64 = 20;
+const F_LESS: i64 = 21;
+const F_GREATER: i64 = 22;
+const F_NOT_EQUAL: i64 = 23;
+const F_LESS_EQUAL: i64 = 24;
+const F_GREATER_EQUAL: i64 = 25;
 
-const S_CONSTANT: i64 = 30;
-const S_ADD: i64 = 31;
-const S_LOAD: i64 = 32;
-const S_STORE: i64 = 33;
-//const S_JUMP_EQUAL: i64 = 34;
-//const S_JUMP_NOT_EQUAL: i64 = 35;
+const S_CONSTANT: i64 = 26;
+const S_ADD: i64 = 27;
+const S_LOAD: i64 = 28;
+const S_STORE: i64 = 29;
+const S_EQUAL: i64 = 30;
+const S_NOT_EQUAL: i64 = 31;
 
-const JUMP_IF_FALSE: i64 = 36;
-const JUMP: i64 = 37;
+const OP_AND: i64 = 32;
+const OP_OR: i64 = 33;
 
-const CALL: i64 = 38;
-const RETURN_VAL: i64 = 39;
-const RETURN_NON_VAL: i64 = 40;
-const ARG_LOAD: i64 = 41;
-const ARG_STORE: i64 = 42;
+const JUMP_IF_FALSE: i64 = 34;
+const JUMP: i64 = 35;
 
-const HALT: i64 = 43;
-const I_PRINT: i64 = 44;
-const F_PRINT: i64 = 45;
-const S_PRINT: i64 = 46;
+const CALL: i64 = 36;
+const RETURN_VAL: i64 = 37;
+const RETURN_NON_VAL: i64 = 38;
+const ARG_LOAD: i64 = 39;
+const ARG_STORE: i64 = 40;
+
+const USE: i64 = 41;
+
+const HALT: i64 = 42;
 
 pub struct Disassembler {
     ip: usize,
@@ -103,8 +101,6 @@ impl Disassembler {
                 I_NOT_EQUAL => println!("{}: {}", self.ip - 1, "i_not_equal"),
                 I_LESS_EQUAL => println!("{}: {}", self.ip - 1, "i_less_equal"),
                 I_GREATER_EQUAL => println!("{}: {}", self.ip - 1, "i_greater_equal"),
-                I_OR => println!("{}: {}", self.ip - 1, "i_or"),
-                I_AND => println!("{}: {}", self.ip - 1, "i_and"),
                 F_CONSTANT => {
                     println!("{}: {} {}", self.ip - 1, "f_constant", f64::from_be_bytes(self.code[self.ip].to_be_bytes()));
                     self.ip += 1;
@@ -119,8 +115,6 @@ impl Disassembler {
                 F_NOT_EQUAL => println!("{}: {}", self.ip - 1, "f_not_equal"),
                 F_LESS_EQUAL => println!("{}: {}", self.ip - 1, "f_less_equal"),
                 F_GREATER_EQUAL => println!("{}: {}", self.ip - 1, "f_greater_equal"),
-                F_OR => println!("{}: {}", self.ip - 1, "f_or"),
-                F_AND => println!("{}: {}", self.ip - 1, "f_and"),
                 S_CONSTANT => {
                     let index = self.ip - 1;
                     let mut string: String = String::new();
@@ -145,6 +139,10 @@ impl Disassembler {
                     println!("{}: {} {}", self.ip - 1, "s_store", self.code[self.ip]);
                     self.ip += 1;
                 },
+                S_EQUAL => println!("{}: {}", self.ip - 1, "s_equal"),
+                S_NOT_EQUAL => println!("{}: {}", self.ip - 1, "s_not_equal"),
+                OP_AND => println!("{}: {}", self.ip - 1, "op_and"),
+                OP_OR => println!("{}: {}", self.ip - 1, "op_or"),
                 JUMP_IF_FALSE => {
                     println!("{}: {} {}", self.ip - 1, "jump_if_false", self.code[self.ip]);
                     self.ip += 1;
@@ -167,10 +165,16 @@ impl Disassembler {
                     println!("{}: {} {}", self.ip - 1, "arg_store", self.code[self.ip]);
                     self.ip += 1;
                 },
+                USE => {
+                    if self.code[self.ip] == 0 {
+                        println!("{}: {}", self.ip - 1, "use print");
+                        self.ip += 2;
+                    } else if self.code[self.ip] == 1 {
+                        println!("{}: {}", self.ip - 1, "use read");
+                        self.ip += 2;
+                    }
+                }
                 HALT => println!("{}: {}", self.ip - 1, "halt"),
-                I_PRINT => println!("{}: {}", self.ip - 1, "i_print"),
-                F_PRINT => println!("{}: {}", self.ip - 1, "f_print"),
-                S_PRINT => println!("{}: {}", self.ip - 1, "s_print"),
                 _ => panic!("Bad Opcode: {}", opcode),
             }
         }

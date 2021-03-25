@@ -1,6 +1,12 @@
 fn void main() {
-    let s string:0 = "Caden Miller\n";
+	let n int:0 = 10;
 
-    print(s);
-    return;
+	while n >= 0 {
+		print(n, "\n");
+		n = n - 1;
+		if n == 4 {
+			break;
+		}
+	}
+	return;
 }

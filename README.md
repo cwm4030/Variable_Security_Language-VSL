@@ -39,8 +39,9 @@ fn void main() {
 ### Factorial
 ```typescript
 fn void main() {
-    let fact int:0 = 14;
-    print("Factorial of 14: ", factorial(fact), "\n");
+	print("Enter an integer below 20: \n");
+    let fact int:0 = read();
+    print("Factorial of ", fact, ": ", factorial(fact), "\n");
     return;
 }
 
@@ -110,6 +111,62 @@ fn void main() {
     return;
 }
 ```
+### Read statement
+```typescript
+fn void main() {
+	print("What is your name?\n");
+    let name string:0 = read();
+    
+    print("\nHow old are you?\n");
+    let age int:0 = read();
+    
+    print("\nNice to meet you ", name, ", who is ", age, " years old.\n");
+    return;
+}
+```
+### Break statement
+```typescript
+fn void main() {
+	let n int:0 = 10;
+	let i int:0 = 10;
+
+	while n >= 0 {
+		print(n, "\n");
+		n = n - 1;
+		if n == 4 {
+			while i >= 0 {
+				print(i, "\n");
+				i = i - 1;
+				if i == 4 {
+					break;
+				}
+			}
+			break;
+		}
+	}
+	return;
+}
+```
+### Expressions
+```typescript
+fn void main() {
+	let n int:0 = 10;
+	let i int:0 = 10;
+
+	let t float:0 = 3.2;
+	let z float:0 = 4.7;
+	
+	let o string:0 = "B4e";
+	let q string:0 = "b4e";
+	
+	if n == i and t <= z and o != q or 1 == 1 {
+		print("This is true\n");
+	} else {
+		print("This is false\n");
+	}
+	return;
+}
+```
 
 ## Language Rules
 1. All code must be contained within a function.
@@ -121,9 +178,6 @@ fn void main() {
 
 
 ## To Do List
-1. Add the 'break;' statement so that while loops are logically complete.
-2. Implement the 'read();' function to get input from user.
-3. Finish string operations.
-4. Implement arrays for the int, float, and string data types. (And char indexing for string type)
-5. Implement garbage collection in the VM.
-6. Add documentation and clean up code.
+1. Implement arrays (or vectors) for the int, float, and string data types. (And char indexing for string type)
+2. Implement garbage collection in the VM.
+3. Add documentation and clean up code.
