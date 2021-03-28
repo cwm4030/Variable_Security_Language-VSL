@@ -38,26 +38,24 @@ const F_GREATER_EQUAL: i64 = 25;
 
 const S_CONSTANT: i64 = 26;
 const S_ADD: i64 = 27;
-const S_LOAD: i64 = 28;
-const S_STORE: i64 = 29;
-const S_EQUAL: i64 = 30;
-const S_NOT_EQUAL: i64 = 31;
+const S_EQUAL: i64 = 28;
+const S_NOT_EQUAL: i64 = 29;
 
-const OP_AND: i64 = 32;
-const OP_OR: i64 = 33;
+const OP_AND: i64 = 30;
+const OP_OR: i64 = 31;
 
-const JUMP_IF_FALSE: i64 = 34;
-const JUMP: i64 = 35;
+const JUMP_IF_FALSE: i64 = 32;
+const JUMP: i64 = 33;
 
-const CALL: i64 = 36;
-const RETURN_VAL: i64 = 37;
-const RETURN_NON_VAL: i64 = 38;
-const ARG_LOAD: i64 = 39;
-const ARG_STORE: i64 = 40;
+const CALL: i64 = 34;
+const RETURN_VAL: i64 = 35;
+const RETURN_NON_VAL: i64 = 36;
+const ARG_LOAD: i64 = 37;
+const ARG_STORE: i64 = 38;
 
-const USE: i64 = 41;
+const USE: i64 = 39;
 
-const HALT: i64 = 42;
+const HALT: i64 = 40;
 
 //----------------------------------------------------------------------------------
 
@@ -135,7 +133,6 @@ pub struct Parser {
     code: Vec<i64>,
     var_data: HashMap<String, Variable>,
     stack_size: i64,
-    var_string_num: i64,
     fn_data: HashMap<String, Function>,
     current_fn_name: String,
     return_num: i64,
@@ -153,7 +150,6 @@ impl Parser {
             code: Vec::new(),
             var_data: HashMap::new(),
             stack_size: 0,
-            var_string_num: 0,
             fn_data: HashMap::new(),
             current_fn_name: String::new(),
             return_num: 0,
@@ -1555,6 +1551,18 @@ impl Parser {
             if current_token_num + 1 < tokens.len() {
                 // identifier is a function
                 if tokens[current_token_num + 1].token_num == LEFT_PARENTHESIS {
+                    match self.sl_data.get(&tokens[self.current_token_num].token_string) {
+                        Some(x) => {
+                            if x.return_type == standard_library::INT {
+                                expression_type = INT;
+                            } else if x.return_type == standard_library::FLOAT {
+                                expression_type = FLOAT;
+                            } else if x.return_type == standard_library::STRING {
+                                expression_type = STRING;
+                            }
+                        },
+                        None => {},
+                    }
                     match self.fn_data.get(&tokens[current_token_num].token_string) {
                         Some(x) => {
                             expression_type = x.fn_type;
@@ -1890,12 +1898,7 @@ impl Parser {
         self.expression(tokens, expression_type, security_level);
 
         if is_arg == false {
-            if expression_type == INT || expression_type == FLOAT {
-                self.code.push(LOCAL_STORE);
-            } else if expression_type == STRING {
-                self.code.push(S_STORE);
-            }
-    
+            self.code.push(LOCAL_STORE);
             self.code.push(mem_location);
         } else {
             self.code.push(ARG_STORE);
@@ -1913,13 +1916,12 @@ impl Parser {
         self.identifier(tokens);
         let mut var_type: u8 = INT_TYPE;
         let mut expression_type = INT;
+        self.stack_size += 1;
         if tokens[self.current_token_num].token_num == INT_TYPE {
             var_type = INT;
-            self.stack_size += 1;
             expression_type = INT;
         } else if tokens[self.current_token_num].token_num == FLOAT_TYPE {
             var_type = FLOAT;
-            self.stack_size += 1;
             expression_type = FLOAT
         } else if tokens[self.current_token_num].token_num == STRING_TYPE {
             var_type = STRING;
@@ -1944,17 +1946,8 @@ impl Parser {
 
         self.expression(tokens, expression_type, security_level);
 
-        let mem_location: i64;
-
-        if var_type == INT || var_type == FLOAT {
-            mem_location = self.stack_size - 1;
-            locals.push(mem_location);
-        } else if var_type == STRING {
-            mem_location = self.var_string_num;
-            self.var_string_num += 1;
-        } else {
-            mem_location = 0;
-        }
+        let mem_location: i64 = self.stack_size - 1;
+        locals.push(mem_location);
 
         let variable = Variable {
             mem_location: mem_location,
@@ -1968,16 +1961,8 @@ impl Parser {
 
         self.var_data.insert(identifier.clone(), variable);
 
-        if var_type == INT || var_type == FLOAT {
-            self.code.push(LOCAL_STORE);
-        } else if var_type == STRING {
-            self.code.push(S_STORE);
-        }
-
-        match self.var_data.get(&identifier.clone()) {
-            Some(x) => self.code.push(x.mem_location),
-            None => {},
-        }
+        self.code.push(LOCAL_STORE);
+        self.code.push(mem_location);
     }
 
     fn fn_call(&mut self, tokens: &Vec<lexer::Token>) {
@@ -2136,6 +2121,46 @@ impl Parser {
             self.code.push(USE);
             self.code.push(standard_library::READ);
             self.code.push(expression_type);
+        } else {
+            let identifier = tokens[self.current_token_num].token_string.clone();
+            let types: Vec<i64>;
+            let num_types: i64;
+            match self.sl_data.get_mut(&identifier) {
+                Some(x) => {
+                    types = x.types.clone();
+                    num_types = x.num_types;
+                },
+                None => {
+                    types = Vec::new();
+                    num_types = 0;
+                },
+            }
+            self.consume_token();
+            self.left_parenthesis(tokens);
+            
+            let mut current_arg_type = 0;
+            for arg_type in types {
+                if arg_type == standard_library::INT {
+                    self.expression(tokens, INT, 100);
+                } else if arg_type == standard_library::FLOAT {
+                    self.expression(tokens, FLOAT, 100);
+                } else if arg_type == standard_library::STRING {
+                    self.expression(tokens, STRING, 100);
+                }
+                current_arg_type += 1;
+                if current_arg_type != num_types {
+                    self.comma(tokens);
+                }
+            }
+            self.right_parenthesis(tokens);
+
+            match self.sl_data.get_mut(&identifier) {
+                Some(x) => {
+                    self.code.push(USE);
+                    self.code.push(x.sl_num);
+                },
+                None => {},
+            }
         }
     }
 
@@ -2245,11 +2270,7 @@ impl Parser {
             self.error = true;
         }
         if is_arg == false {
-            if var_type == INT || var_type == FLOAT {
-                self.code.push(LOCAL_LOAD);
-            } else if var_type == STRING {
-                self.code.push(S_LOAD);
-            }
+            self.code.push(LOCAL_LOAD);
             self.code.push(mem_location);
         } else {
             self.code.push(ARG_LOAD);

@@ -28,26 +28,24 @@ const F_GREATER_EQUAL: i64 = 25;
 
 const S_CONSTANT: i64 = 26;
 const S_ADD: i64 = 27;
-const S_LOAD: i64 = 28;
-const S_STORE: i64 = 29;
-const S_EQUAL: i64 = 30;
-const S_NOT_EQUAL: i64 = 31;
+const S_EQUAL: i64 = 28;
+const S_NOT_EQUAL: i64 = 29;
 
-const OP_AND: i64 = 32;
-const OP_OR: i64 = 33;
+const OP_AND: i64 = 30;
+const OP_OR: i64 = 31;
 
-const JUMP_IF_FALSE: i64 = 34;
-const JUMP: i64 = 35;
+const JUMP_IF_FALSE: i64 = 32;
+const JUMP: i64 = 33;
 
-const CALL: i64 = 36;
-const RETURN_VAL: i64 = 37;
-const RETURN_NON_VAL: i64 = 38;
-const ARG_LOAD: i64 = 39;
-const ARG_STORE: i64 = 40;
+const CALL: i64 = 34;
+const RETURN_VAL: i64 = 35;
+const RETURN_NON_VAL: i64 = 36;
+const ARG_LOAD: i64 = 37;
+const ARG_STORE: i64 = 38;
 
-const USE: i64 = 41;
+const USE: i64 = 39;
 
-const HALT: i64 = 42;
+const HALT: i64 = 40;
 
 pub struct Disassembler {
     ip: usize,
@@ -131,14 +129,6 @@ impl Disassembler {
                     self.ip += 1;
                 },
                 S_ADD => println!("{}: {}", self.ip - 1, "s_add"),
-                S_LOAD => {
-                    println!("{}: {} {}", self.ip - 1, "s_load", self.code[self.ip]);
-                    self.ip += 1;
-                },
-                S_STORE => {
-                    println!("{}: {} {}", self.ip - 1, "s_store", self.code[self.ip]);
-                    self.ip += 1;
-                },
                 S_EQUAL => println!("{}: {}", self.ip - 1, "s_equal"),
                 S_NOT_EQUAL => println!("{}: {}", self.ip - 1, "s_not_equal"),
                 OP_AND => println!("{}: {}", self.ip - 1, "op_and"),
@@ -172,6 +162,33 @@ impl Disassembler {
                     } else if self.code[self.ip] == 1 {
                         println!("{}: {}", self.ip - 1, "use read");
                         self.ip += 2;
+                    } else if self.code[self.ip] == 2 {
+                        println!("{}: {}", self.ip - 1, "use string_to_int");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 3 {
+                        println!("{}: {}", self.ip - 1, "use string_to_float");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 4 {
+                        println!("{}: {}", self.ip - 1, "use int_to_float");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 5 {
+                        println!("{}: {}", self.ip - 1, "use int_to_string");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 6 {
+                        println!("{}: {}", self.ip - 1, "use float_to_int");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 7 {
+                        println!("{}: {}", self.ip - 1, "use float_to_string");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 8 {
+                        println!("{}: {}", self.ip - 1, "use get_string_index");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 9 {
+                        println!("{}: {}", self.ip - 1, "use set_string_index");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 10 {
+                        println!("{}: {}", self.ip - 1, "use get_copy_string");
+                        self.ip += 1;
                     }
                 }
                 HALT => println!("{}: {}", self.ip - 1, "halt"),

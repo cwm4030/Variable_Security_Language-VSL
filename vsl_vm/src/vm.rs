@@ -31,44 +31,50 @@ const F_GREATER_EQUAL: i64 = 25;
 
 const S_CONSTANT: i64 = 26;
 const S_ADD: i64 = 27;
-const S_LOAD: i64 = 28;
-const S_STORE: i64 = 29;
-const S_EQUAL: i64 = 30;
-const S_NOT_EQUAL: i64 = 31;
+const S_EQUAL: i64 = 28;
+const S_NOT_EQUAL: i64 = 29;
 
-const OP_AND: i64 = 32;
-const OP_OR: i64 = 33;
+const OP_AND: i64 = 30;
+const OP_OR: i64 = 31;
 
-const JUMP_IF_FALSE: i64 = 34;
-const JUMP: i64 = 35;
+const JUMP_IF_FALSE: i64 = 32;
+const JUMP: i64 = 33;
 
-const CALL: i64 = 36;
-const RETURN_VAL: i64 = 37;
-const RETURN_NON_VAL: i64 = 38;
-const ARG_LOAD: i64 = 39;
-const ARG_STORE: i64 = 40;
+const CALL: i64 = 34;
+const RETURN_VAL: i64 = 35;
+const RETURN_NON_VAL: i64 = 36;
+const ARG_LOAD: i64 = 37;
+const ARG_STORE: i64 = 38;
 
-const USE: i64 = 41;
+const USE: i64 = 39;
 
-const HALT: i64 = 42;
+const HALT: i64 = 40;
 
 //----------------------------------------------------------------------------------------------------
 
- // data types
- pub const INT: i64 = 0;
- pub const FLOAT: i64 = 1;
- pub const STRING: i64 = 2;
+// data types
+const INT: i64 = 0;
+const FLOAT: i64 = 1;
+const STRING: i64 = 2;
 
- // functions
- pub const PRINT: i64 = 0;
- pub const READ: i64 = 1;
+// functions
+const PRINT: i64 = 0;
+const READ: i64 = 1;
+const STRING_TO_INT: i64 = 2;
+const STRING_TO_FLOAT: i64 = 3;
+const INT_TO_FLOAT: i64 = 4;
+const INT_TO_STRING: i64 = 5;
+const FLOAT_TO_INT: i64 = 6;
+const FLOAT_TO_STRING: i64 = 7;
+const GET_STRING_INDEX: i64 = 8;
+const SET_STRING_INDEX: i64 = 9;
+const GET_COPY_STRING: i64 = 10;
 
 
  //---------------------------------------------------------------------------------------------------
 
 pub struct VM {
     string_constants: Vec<String>,
-    string_data: Vec<String>,
     stack: Vec<i64>,
     code: Vec<i64>,
     ip: usize,
@@ -82,7 +88,7 @@ impl VM {
     pub fn new(program: Vec<i64>, debug: bool) -> VM {
         let mut vm = VM {
             string_constants: Vec::new(),
-            string_data: Vec::new(),
+            //string_data: Vec::new(),
             stack: Vec::new(),
             code: Vec::new(),
             ip: 0,
@@ -115,7 +121,7 @@ impl VM {
                 },
                 LOCAL_LOAD => {
                     if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "i_load", self.code[self.ip]);
+                        println!("{}: {} {}", self.ip - 1, "local_load", self.code[self.ip]);
                     }
                     let index: usize = self.code[self.ip] as usize + self.fp + 3;
                     self.stack.push(self.stack[index]);
@@ -124,7 +130,7 @@ impl VM {
                 },
                 LOCAL_STORE => {
                     if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "i_store", self.code[self.ip]);
+                        println!("{}: {} {}", self.ip - 1, "local_store", self.code[self.ip]);
                     }
                     let index: usize = self.code[self.ip] as usize + self.fp + 3;
                     let data = self.stack[self.sp - 1];
@@ -476,43 +482,15 @@ impl VM {
                     if self.debug {
                         println!("{}: {}", self.ip - 1, "s_add");
                     }
-                    let a = self.stack[self.sp - 2];
-                    let b = self.stack[self.sp - 1];
+                    let a = self.stack[self.sp - 2] as usize;
+                    let b = self.stack[self.sp - 1] as usize;
                     self.stack.pop();
                     self.stack.pop();
-                    self.stack.push(a);
-                    self.sp -= 1;
 
-                    self.string_constants[a as usize] = self.string_constants[a as usize].clone() + &self.string_constants[b as usize].clone();
-                },
-                S_LOAD => {
-                    if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "s_load", self.code[self.ip]);
-                    }
-                    let mem_location = self.code[self.ip] as usize;
-                    self.string_constants.push(self.string_data[mem_location].clone());
+                    let new_string = self.string_constants[a].clone() + &self.string_constants[b].clone();
+                    self.string_constants.push(new_string);
                     self.stack.push(self.string_constants.len() as i64 - 1);
-                    self.sp += 1;
-                    self.ip += 1;
-                },
-                S_STORE => {
-                    if self.debug {
-                        println!("{}: {} {}", self.ip - 1, "s_store", self.code[self.ip]);
-                    }
-
-                    let index: i64 = self.code[self.ip];
-                    if index == self.string_data.len() as i64 {
-                        self.string_data.push(self.string_constants[self.stack[self.sp - 1] as usize].clone());
-                    } else if index < self.string_data.len() as i64 {
-                        self.string_data[index as usize] = self.string_constants[self.stack[self.sp - 1] as usize].clone();
-                    } else if index > self.string_data.len() as i64 {
-                        self.string_data.resize(index as usize + 1, String::new());
-                        self.string_data[index as usize] = self.string_constants[self.stack[self.sp - 1] as usize].clone();
-                    }
-
-                    self.stack.pop();
                     self.sp -= 1;
-                    self.ip += 1;
                 },
                 S_EQUAL => {
                     if self.debug {
@@ -749,6 +727,93 @@ impl VM {
                 }
                 self.sp += 1;
                 self.ip += 1;
+            },
+            STRING_TO_INT => {
+                self.ip += 1;
+                let mem_location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+
+                match self.string_constants[mem_location].parse::<i64>() {
+                    Ok(x) => self.stack.push(x),
+                    Err(_x) => self.stack.push(0),
+                }
+            },
+            STRING_TO_FLOAT => {
+                self.ip += 1;
+                let mem_location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+
+                match self.string_constants[mem_location].parse::<f64>() {
+                    Ok(x) => self.stack.push(i64::from_be_bytes(x.to_be_bytes())),
+                    Err(_x) => self.stack.push(0),
+                }
+            },
+            INT_TO_FLOAT => {
+                self.ip += 1;
+                let integer = self.stack[self.sp - 1];
+                self.stack.pop();
+                let float = integer as f64;
+                self.stack.push(i64::from_be_bytes(float.to_be_bytes()));
+            },
+            INT_TO_STRING => {
+                self.ip += 1;
+                let integer = self.stack[self.sp - 1];
+                self.stack.pop();
+                let string = integer.to_string();
+                self.string_constants.push(string);
+                self.stack.push(self.string_constants.len() as i64 - 1);
+            },
+            FLOAT_TO_INT => {
+                self.ip += 1;
+                let float = f64::from_be_bytes(self.stack[self.sp - 1].to_be_bytes());
+                self.stack.pop();
+                let integer = float as i64;
+                self.stack.push(integer);
+            },
+            FLOAT_TO_STRING => {
+                self.ip += 1;
+                let float = f64::from_be_bytes(self.stack[self.sp - 1].to_be_bytes());
+                self.stack.pop();
+                let string = float.to_string();
+                self.string_constants.push(string);
+                self.stack.push(self.string_constants.len() as i64 - 1);
+            },
+            GET_STRING_INDEX => {
+                self.ip += 1;
+                let string_mem_location = self.stack[self.sp - 2] as usize;
+                let index = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                self.stack.pop();
+                let mut new_string = String::new();
+                match self.string_constants[string_mem_location].chars().nth(index) {
+                    Some(x) => new_string.push(x),
+                    None => {},
+                }
+                self.string_constants.push(new_string);
+                self.stack.push(self.string_constants.len() as i64 - 1);
+                self.sp -= 1;
+            },
+            SET_STRING_INDEX => {
+                self.ip += 1;
+                let string_mem_location = self.stack[self.sp - 3] as usize;
+                let index = self.stack[self.sp - 2] as usize;
+                let char_mem_location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                self.stack.pop();
+                self.stack.pop();
+                match self.string_constants[char_mem_location].chars().nth(0) {
+                    Some(x) => self.string_constants[string_mem_location].insert(index, x),
+                    None => {},
+                }
+                self.sp -= 3;
+            },
+            GET_COPY_STRING => {
+                self.ip += 1;
+                let string_mem_location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                let new_string = self.string_constants[string_mem_location].clone();
+                self.string_constants.push(new_string);
+                self.stack.push(self.string_constants.len() as i64 - 1);
             },
             _ => {
                 panic!("Standard library function does not exist.");
