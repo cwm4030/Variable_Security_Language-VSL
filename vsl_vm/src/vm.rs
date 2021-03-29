@@ -75,6 +75,9 @@ const GET_COPY_STRING: i64 = 10;
 
 pub struct VM {
     string_constants: Vec<String>,
+    int_vec_constants: Vec<Vec<i64>>,
+    float_vec_constants: Vec<Vec<f64>>,
+    string_vec_constants: Vec<Vec<String>>,
     stack: Vec<i64>,
     code: Vec<i64>,
     ip: usize,
@@ -88,7 +91,9 @@ impl VM {
     pub fn new(program: Vec<i64>, debug: bool) -> VM {
         let mut vm = VM {
             string_constants: Vec::new(),
-            //string_data: Vec::new(),
+            int_vec_constants: Vec::new(),
+            float_vec_constants: Vec::new(),
+            string_vec_constants: Vec::new(),
             stack: Vec::new(),
             code: Vec::new(),
             ip: 0,

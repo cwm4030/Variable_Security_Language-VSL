@@ -176,6 +176,52 @@ fn void main() {
 5. The syntax for defining new variables is as follows:
     let_keyword identifier variable_type:security_value = expression.
 
+## Standard Library
+1. ```typescript
+    print(arg1, arg2, arg3, ...)
+    ```
+    The print function takes 1 or more arguments of any primitive type and prints to the screeen.
+2. ```typescript
+    read()
+    ```
+    The read function gets input from the user and parses it to the correct type. If this fails for int or float, it returns 0. If it fails for the string type, it returns an empty string.
+3. ```typescript
+    string_to_int(arg1 string:100)
+    ```
+    Takes a string as input and converts to an integer. Returns 0 if the conversion fails.
+4. ```typescript
+    string_to_foat(arg1 string:100)
+    ```
+    Takes a string as input and converts to a float. Returns 0 if the conversion fails.
+5. ```typescript
+    int_to_float(arg1 int:100)
+    ```
+    Takes an integer as input and converts to a float. Returns 0 if the conversion fails.
+5. ```typescript
+    int_to_string(arg1 int:100)
+    ```
+    Takes an integer as input and converts to a string. Returns an empty string if the conversion fails.
+6. ```typescript
+    float_to_int(arg1 float:100) 
+    ```
+    Takes a float as input and converts to an integer. Returns 0 if the conversion fails.
+7. ```typescript
+    float_to_string(arg1 float:100)
+    ```
+    Takes a float an input and converts to a string. Returns an empty string if the conversion fails.
+8. ```typescript
+    get_string_index(arg1 string:100, arg2 int:100)
+    ```
+    Takes a string and an integer as input and returns the index of the string as a string. Returns an empty string if fails. arg1 is the original string and arg2 is the index.
+9. ```typescript
+    set_string_index(arg1 string:100, arg2 int:100, arg3 string:100)
+    ```
+    Takes a string, an integer, and another string as input. arg1 is the string to be changed, arg2 is the index of the string to change, and arg3 is the value that will be inserted at the index of arg1. 
+10. ```typescript
+    get_copy_string(arg1 string:100)
+    ```
+    Takes a string as input and returns a copy of the string.
+
 
 ## To Do List
 1. Implement arrays (or vectors) for the int, float, and string data types. (And char indexing for string type)
