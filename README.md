@@ -167,6 +167,16 @@ fn void main() {
     return;
 }
 ```
+### Variable Security Hierarchy
+```typescript
+fn void main() {
+	let sale_id int:0 = 1456328;
+    let name string:0 = "John Doe";
+    let credit_card_number int:1 = 8879419156;
+    let social_security_number int:2 = 784986548;
+    return;
+}
+```
 
 ## Language Rules
 1. All code must be contained within a function.
