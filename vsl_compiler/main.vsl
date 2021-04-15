@@ -1,4 +1,11 @@
 fn void main() {
-    print("Hello, World!\n");
+    let x vec_int:0 = vec_int_new();
+    vec_int_push(x, 2);
+    vec_int_push(x, 64);
+    print(vec_int_get_index(x, 0), "\n");
+    print(vec_int_get_index(x, 1), "\n");
+    
+    let i int:0 = (6 + 7) * (9 + 2 * 7);
+    print(i, "\n");
     return;
 }

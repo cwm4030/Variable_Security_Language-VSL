@@ -69,15 +69,33 @@ const FLOAT_TO_STRING: i64 = 7;
 const GET_STRING_INDEX: i64 = 8;
 const SET_STRING_INDEX: i64 = 9;
 const GET_COPY_STRING: i64 = 10;
+const VEC_INT_NEW: i64 = 11;
+const VEC_INT_PUSH: i64 = 12;
+const VEC_INT_POP: i64 = 13;
+const VEC_INT_SET_INDEX: i64 = 14;
+const VEC_INT_GET_INDEX: i64 = 15;
+const VEC_INT_LEN: i64 = 16;
+const VEC_FLOAT_NEW: i64 = 17;
+const VEC_FLOAT_PUSH: i64 = 18;
+const VEC_FLOAT_POP: i64 = 19;
+const VEC_FLOAT_SET_INDEX: i64 = 20;
+const VEC_FLOAT_GET_INDEX: i64 = 21;
+const VEC_FLOAT_LEN: i64 = 22;
+const VEC_STRING_NEW: i64 = 23;
+const VEC_STRING_PUSH: i64 = 24;
+const VEC_STRING_POP: i64 = 25;
+const VEC_STRING_SET_INDEX: i64 = 26;
+const VEC_STRING_GET_INDEX: i64 = 27;
+const VEC_STRING_LEN: i64 = 28;
 
 
  //---------------------------------------------------------------------------------------------------
 
 pub struct VM {
     string_constants: Vec<String>,
-    int_vec_constants: Vec<Vec<i64>>,
-    float_vec_constants: Vec<Vec<f64>>,
-    string_vec_constants: Vec<Vec<String>>,
+    vec_int_constants: Vec<Vec<i64>>,
+    vec_float_constants: Vec<Vec<f64>>,
+    vec_string_constants: Vec<Vec<String>>,
     stack: Vec<i64>,
     code: Vec<i64>,
     ip: usize,
@@ -91,9 +109,9 @@ impl VM {
     pub fn new(program: Vec<i64>, debug: bool) -> VM {
         let mut vm = VM {
             string_constants: Vec::new(),
-            int_vec_constants: Vec::new(),
-            float_vec_constants: Vec::new(),
-            string_vec_constants: Vec::new(),
+            vec_int_constants: Vec::new(),
+            vec_float_constants: Vec::new(),
+            vec_string_constants: Vec::new(),
             stack: Vec::new(),
             code: Vec::new(),
             ip: 0,
@@ -819,6 +837,111 @@ impl VM {
                 let new_string = self.string_constants[string_mem_location].clone();
                 self.string_constants.push(new_string);
                 self.stack.push(self.string_constants.len() as i64 - 1);
+            },
+            VEC_INT_NEW => {
+                self.ip += 1;
+                let vec_int: Vec<i64> = Vec::new();
+                self.vec_int_constants.push(vec_int);
+                self.stack.push(self.vec_int_constants.len() as i64 - 1);
+                self.sp += 1;
+            },
+            VEC_INT_PUSH => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 2] as usize;
+                let value = self.stack[self.sp - 1];
+                self.stack.pop();
+                self.stack.pop();
+                self.sp -= 2;
+
+                self.vec_int_constants[location].push(value);
+            },
+            VEC_INT_POP => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                self.sp -= 1;
+
+                self.vec_int_constants[location].pop();
+            },
+            VEC_INT_SET_INDEX => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 3] as usize;
+                let value_location = self.stack[self.sp - 2] as usize;
+                let value = self.stack[self.sp - 1];
+                self.stack.pop();
+                self.stack.pop();
+                self.sp -= 2;
+
+                self.vec_int_constants[location][value_location] = value;
+            },
+            VEC_INT_GET_INDEX => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 2] as usize;
+                let value_location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                self.stack.pop();
+
+                self.stack.push(self.vec_int_constants[location][value_location]);
+                self.sp -= 1;
+            },
+            VEC_INT_LEN => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 1] as usize;
+
+                self.stack.push(self.vec_int_constants[location].len() as i64);
+            },
+
+            VEC_FLOAT_NEW => {
+                self.ip += 1;
+                let vec_float: Vec<f64> = Vec::new();
+                self.vec_float_constants.push(vec_float);
+                self.stack.push(self.vec_int_constants.len() as i64 - 1);
+                self.sp += 1;
+            },
+            VEC_FLOAT_PUSH => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 2] as usize;
+                let value = f64::from_be_bytes(self.stack[self.sp - 1].to_be_bytes());
+                self.stack.pop();
+                self.stack.pop();
+                self.sp -= 2;
+
+                self.vec_float_constants[location].push(value);
+            },
+            VEC_FLOAT_POP => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                self.sp -= 1;
+
+                self.vec_float_constants[location].pop();
+            },
+            VEC_FLOAT_SET_INDEX => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 3] as usize;
+                let value_location = self.stack[self.sp - 2] as usize;
+                let value = f64::from_be_bytes(self.stack[self.sp - 1].to_be_bytes());
+                self.stack.pop();
+                self.stack.pop();
+                self.sp -= 2;
+
+                self.vec_float_constants[location][value_location] = value;
+            },
+            VEC_FLOAT_GET_INDEX => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 2] as usize;
+                let value_location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
+                self.stack.pop();
+
+                self.stack.push(i64::from_be_bytes(self.vec_int_constants[location][value_location].to_be_bytes()));
+                self.sp -= 1;
+            },
+            VEC_FLOAT_LEN => {
+                self.ip += 1;
+                let location = self.stack[self.sp - 1] as usize;
+
+                self.stack.push(self.vec_int_constants[location].len() as i64);
             },
             _ => {
                 panic!("Standard library function does not exist.");

@@ -189,6 +189,42 @@ impl Disassembler {
                     } else if self.code[self.ip] == 10 {
                         println!("{}: {}", self.ip - 1, "use get_copy_string");
                         self.ip += 1;
+                    } else if self.code[self.ip] == 11 {
+                        println!("{}: {}", self.ip - 1, "use vec_int_new");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 12 {
+                        println!("{}: {}", self.ip - 1, "use vec_int_push");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 13 {
+                        println!("{}: {}", self.ip - 1, "use vec_int_pop");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 14 {
+                        println!("{}: {}", self.ip - 1, "use vec_int_set_index");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 15 {
+                        println!("{}: {}", self.ip - 1, "use vec_int_get_index");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 16 {
+                        println!("{}: {}", self.ip - 1, "use vec_int_len");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 17 {
+                        println!("{}: {}", self.ip - 1, "use vec_float_new");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 18 {
+                        println!("{}: {}", self.ip - 1, "use vec_float_push");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 19 {
+                        println!("{}: {}", self.ip - 1, "use vec_float_pop");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 20 {
+                        println!("{}: {}", self.ip - 1, "use vec_float_set_index");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 21 {
+                        println!("{}: {}", self.ip - 1, "use vec_float_get_index");
+                        self.ip += 1;
+                    } else if self.code[self.ip] == 22 {
+                        println!("{}: {}", self.ip - 1, "use vec_float_len");
+                        self.ip += 1;
                     }
                 }
                 HALT => println!("{}: {}", self.ip - 1, "halt"),

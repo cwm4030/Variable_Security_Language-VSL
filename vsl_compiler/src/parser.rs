@@ -95,9 +95,9 @@ const ELSE: u8 = 31;
 
 const VOID: u8 = 32;
 const BREAK: u8 = 33;
-//const VEC_INT: u8 = 34;
-//const VEC_FLOAT: u8 = 35;
-//const VEC_STRING: u8 = 36;
+const VEC_INT: u8 = 34;
+const VEC_FLOAT: u8 = 35;
+const VEC_STRING: u8 = 36;
 
 const IDENTIFIER: u8 = 37;
 const INT: u8 = 38;
@@ -255,6 +255,12 @@ impl Parser {
                                 var_type = FLOAT;
                             } else if tokens[self.current_token_num].token_num == STRING_TYPE {
                                 var_type = STRING;
+                            } else if tokens[self.current_token_num].token_num == VEC_INT {
+                                var_type = VEC_INT;
+                            } else if tokens[self.current_token_num].token_num == VEC_FLOAT {
+                                var_type = VEC_FLOAT;
+                            } else if tokens[self.current_token_num].token_num == VEC_STRING {
+                                var_type = VEC_STRING;
                             }
                             arg_types.push(var_type);
                             // var type
@@ -524,6 +530,12 @@ impl Parser {
                             var_type = FLOAT;
                         } else if tokens[self.current_token_num].token_num == STRING_TYPE {
                             var_type = STRING;
+                        } else if tokens[self.current_token_num].token_num == VEC_INT {
+                            var_type = VEC_INT;
+                        } else if tokens[self.current_token_num].token_num == VEC_FLOAT {
+                            var_type = VEC_FLOAT;
+                        } else if tokens[self.current_token_num].token_num == VEC_STRING {
+                            var_type = VEC_STRING;
                         }
                         // var type
                         self.var_type(tokens);
@@ -676,6 +688,9 @@ impl Parser {
             tokens[self.current_token_num].token_num != FLOAT_TYPE && 
             tokens[self.current_token_num].token_num != STRING_TYPE &&
             tokens[self.current_token_num].token_num != STRING_TYPE &&
+            tokens[self.current_token_num].token_num != VEC_INT && 
+            tokens[self.current_token_num].token_num != VEC_FLOAT && 
+            tokens[self.current_token_num].token_num != VEC_STRING &&
             tokens[self.current_token_num].token_num != VOID {
                 println!("Expected type, got '{}' on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
                 self.error = true;
@@ -717,7 +732,10 @@ impl Parser {
     fn var_type(&mut self, tokens: &Vec<lexer::Token>) {
         if tokens[self.current_token_num].token_num != INT_TYPE &&
             tokens[self.current_token_num].token_num != FLOAT_TYPE && 
-            tokens[self.current_token_num].token_num != STRING_TYPE {
+            tokens[self.current_token_num].token_num != STRING_TYPE && 
+            tokens[self.current_token_num].token_num != VEC_INT && 
+            tokens[self.current_token_num].token_num != VEC_FLOAT && 
+            tokens[self.current_token_num].token_num != VEC_STRING {
                 println!("Expected type, got '{}' on line {}.", tokens[self.current_token_num].token_string, tokens[self.current_token_num].line_num);
                 self.error = true;
                 self.consume_token();
@@ -874,8 +892,8 @@ impl Parser {
                     self.code.push(I_DIV);
                 } else if expression_type == FLOAT {
                     self.code.push(F_DIV);
-                } else if expression_type == STRING {
-                    println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support division on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == mul {
@@ -883,8 +901,8 @@ impl Parser {
                     self.code.push(I_MUL);
                 } else if expression_type == FLOAT {
                     self.code.push(F_MUL);
-                } else if expression_type == STRING {
-                    println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == sub {
@@ -892,8 +910,8 @@ impl Parser {
                     self.code.push(I_SUB);
                 } else if expression_type == FLOAT {
                     self.code.push(F_SUB);
-                } else if expression_type == STRING {
-                    println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == add {
@@ -903,14 +921,17 @@ impl Parser {
                     self.code.push(F_ADD);
                 } else if expression_type == STRING {
                     self.code.push(S_ADD);
+                } else {
+                    println!("Type does not support addition on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == greater_equal {
                 if expression_type == INT {
                     self.code.push(I_GREATER_EQUAL);
                 } else if expression_type == FLOAT {
                     self.code.push(F_GREATER_EQUAL);
-                } else if expression_type == STRING {
-                    println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == less_equal {
@@ -918,8 +939,8 @@ impl Parser {
                     self.code.push(I_LESS_EQUAL);
                 } else if expression_type == FLOAT {
                     self.code.push(F_LESS_EQUAL);
-                } else if expression_type == STRING {
-                    println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == greater {
@@ -927,8 +948,8 @@ impl Parser {
                     self.code.push(I_GREATER);
                 } else if expression_type == FLOAT {
                     self.code.push(F_GREATER);
-                } else if expression_type == STRING {
-                    println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == less {
@@ -936,8 +957,8 @@ impl Parser {
                     self.code.push(I_LESS);
                 } else if expression_type == FLOAT {
                     self.code.push(F_LESS);
-                } else if expression_type == STRING {
-                    println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                } else {
+                    println!("Type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
                     self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == equal_equal {
@@ -947,6 +968,9 @@ impl Parser {
                     self.code.push(F_EQUAL);
                 } else if expression_type == STRING {
                     self.code.push(S_EQUAL);
+                } else {
+                    println!("Type does not support equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == not_equal {
                 if expression_type == INT {
@@ -955,6 +979,9 @@ impl Parser {
                     self.code.push(F_NOT_EQUAL);
                 } else if expression_type == STRING {
                     self.code.push(S_NOT_EQUAL);
+                } else {
+                    println!("Type does not support not equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
                 }
             } else if expression_stack[expression_stack.len() - 1] == and {
                 self.code.push(OP_AND);
@@ -971,442 +998,39 @@ impl Parser {
         self.drain_expression_stack(tokens, expression_type, &mut expression_stack);
     }
 
-    fn multiplicative_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
-        let mul = 11;
-        let div = 12;
-        if expression_stack[expression_stack.len() - 1] == div {
-            if expression_type == INT {
-                self.code.push(I_DIV);
-            } else if expression_type == FLOAT {
-                self.code.push(F_DIV);
-            } else if expression_type == STRING {
-                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == mul {
-            if expression_type == INT {
-                self.code.push(I_MUL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_MUL);
-            } else if expression_type == STRING {
-                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
+    fn get_precedence(&mut self, current_token_num: u8) -> u8 {
+        let precedence: u8;
+        if current_token_num == OR {
+            precedence = 1;
+        } else if current_token_num == AND {
+            precedence = 2;
+        } else if current_token_num == EQUAL_EQUAL {
+            precedence = 3;
+        } else if current_token_num == NOT_EQUAL {
+            precedence = 3;
+        } else if current_token_num == LESS {
+            precedence = 4;
+        } else if current_token_num == GREATER {
+            precedence = 4;
+        } else if current_token_num == LESS_EQUAL {
+            precedence = 4;
+        } else if current_token_num == GREATER_EQUAL {
+            precedence = 4;
+        } else if current_token_num == ADD {
+            precedence = 5;
+        } else if current_token_num == SUB {
+            precedence = 5;
+        } else if current_token_num == MUL {
+            precedence = 6;
+        } else if current_token_num == DIV {
+            precedence = 6;
         } else {
-            expression_stack.push(value);
+            precedence = 0;
         }
+        precedence
     }
 
-    fn additive_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
-        let add = 9;
-        let sub = 10;
-        let mul = 11;
-        let div = 12;
-        if expression_stack[expression_stack.len() - 1] == div {
-            if expression_type == INT {
-                self.code.push(I_DIV);
-            } else if expression_type == FLOAT {
-                self.code.push(F_DIV);
-            } else if expression_type == STRING {
-                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == mul {
-            if expression_type == INT {
-                self.code.push(I_MUL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_MUL);
-            } else if expression_type == STRING {
-                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == sub {
-            if expression_type == INT {
-                self.code.push(I_SUB);
-            } else if expression_type == FLOAT {
-                self.code.push(F_SUB);
-            } else if expression_type == STRING {
-                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == add {
-            if expression_type == INT {
-                self.code.push(I_ADD);
-            } else if expression_type == FLOAT {
-                self.code.push(F_ADD);
-            } else if expression_type == STRING {
-                self.code.push(S_ADD);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else {
-            expression_stack.push(value);
-        }
-    }
-
-    fn relational_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
-        let less = 5;
-        let greater = 6;
-        let less_equal = 7;
-        let greater_equal = 8;
-        let add = 9;
-        let sub = 10;
-        let mul = 11;
-        let div = 12;
-        if expression_stack[expression_stack.len() - 1] == div {
-            if expression_type == INT {
-                self.code.push(I_DIV);
-            } else if expression_type == FLOAT {
-                self.code.push(F_DIV);
-            } else if expression_type == STRING {
-                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == mul {
-            if expression_type == INT {
-                self.code.push(I_MUL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_MUL);
-            } else if expression_type == STRING {
-                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == sub {
-            if expression_type == INT {
-                self.code.push(I_SUB);
-            } else if expression_type == FLOAT {
-                self.code.push(F_SUB);
-            } else if expression_type == STRING {
-                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == add {
-            if expression_type == INT {
-                self.code.push(I_ADD);
-            } else if expression_type == FLOAT {
-                self.code.push(F_ADD);
-            } else if expression_type == STRING {
-                self.code.push(S_ADD);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater_equal {
-            if expression_type == INT {
-                self.code.push(I_GREATER_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less_equal {
-            if expression_type == INT {
-                self.code.push(I_LESS_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater {
-            if expression_type == INT {
-                self.code.push(I_GREATER);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less {
-            if expression_type == INT {
-                self.code.push(I_LESS);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS);
-            } else if expression_type == STRING {
-                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else {
-            expression_stack.push(value);
-        }
-    }
-
-    fn equality_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
-        let equal_equal = 3;
-        let not_equal = 4;
-        let less = 5;
-        let greater = 6;
-        let less_equal = 7;
-        let greater_equal = 8;
-        let add = 9;
-        let sub = 10;
-        let mul = 11;
-        let div = 12;
-        if expression_stack[expression_stack.len() - 1] == div {
-            if expression_type == INT {
-                self.code.push(I_DIV);
-            } else if expression_type == FLOAT {
-                self.code.push(F_DIV);
-            } else if expression_type == STRING {
-                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == mul {
-            if expression_type == INT {
-                self.code.push(I_MUL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_MUL);
-            } else if expression_type == STRING {
-                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == sub {
-            if expression_type == INT {
-                self.code.push(I_SUB);
-            } else if expression_type == FLOAT {
-                self.code.push(F_SUB);
-            } else if expression_type == STRING {
-                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == add {
-            if expression_type == INT {
-                self.code.push(I_ADD);
-            } else if expression_type == FLOAT {
-                self.code.push(F_ADD);
-            } else if expression_type == STRING {
-                self.code.push(S_ADD);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater_equal {
-            if expression_type == INT {
-                self.code.push(I_GREATER_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less_equal {
-            if expression_type == INT {
-                self.code.push(I_LESS_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater {
-            if expression_type == INT {
-                self.code.push(I_GREATER);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less {
-            if expression_type == INT {
-                self.code.push(I_LESS);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS);
-            } else if expression_type == STRING {
-                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == equal_equal {
-            if expression_type == INT {
-                self.code.push(I_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_EQUAL);
-            } else if expression_type == STRING {
-                self.code.push(S_EQUAL);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == not_equal {
-            if expression_type == INT {
-                self.code.push(I_NOT_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_NOT_EQUAL);
-            } else if expression_type == STRING {
-                self.code.push(S_NOT_EQUAL);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else {
-            expression_stack.push(value);
-        }
-    }
-
-    fn and_precendence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
-        let and = 2;
-        let equal_equal = 3;
-        let not_equal = 4;
-        let less = 5;
-        let greater = 6;
-        let less_equal = 7;
-        let greater_equal = 8;
-        let add = 9;
-        let sub = 10;
-        let mul = 11;
-        let div = 12;
-        if expression_stack[expression_stack.len() - 1] == div {
-            if expression_type == INT {
-                self.code.push(I_DIV);
-            } else if expression_type == FLOAT {
-                self.code.push(F_DIV);
-            } else if expression_type == STRING {
-                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == mul {
-            if expression_type == INT {
-                self.code.push(I_MUL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_MUL);
-            } else if expression_type == STRING {
-                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == sub {
-            if expression_type == INT {
-                self.code.push(I_SUB);
-            } else if expression_type == FLOAT {
-                self.code.push(F_SUB);
-            } else if expression_type == STRING {
-                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == add {
-            if expression_type == INT {
-                self.code.push(I_ADD);
-            } else if expression_type == FLOAT {
-                self.code.push(F_ADD);
-            } else if expression_type == STRING {
-                self.code.push(S_ADD);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater_equal {
-            if expression_type == INT {
-                self.code.push(I_GREATER_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less_equal {
-            if expression_type == INT {
-                self.code.push(I_LESS_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater {
-            if expression_type == INT {
-                self.code.push(I_GREATER);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less {
-            if expression_type == INT {
-                self.code.push(I_LESS);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS);
-            } else if expression_type == STRING {
-                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == equal_equal {
-            if expression_type == INT {
-                self.code.push(I_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_EQUAL);
-            } else if expression_type == STRING {
-                self.code.push(S_EQUAL);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == not_equal {
-            if expression_type == INT {
-                self.code.push(I_NOT_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_NOT_EQUAL);
-            } else if expression_type == STRING {
-                self.code.push(S_NOT_EQUAL);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == and {
-            self.code.push(OP_AND);
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else {
-            expression_stack.push(value);
-        }
-    }
-
-    fn or_precedence(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
+    fn shunting_yard(&mut self, tokens: &Vec<lexer::Token>, expression_stack: &mut Vec<u8>, expression_type: u8, value: u8) {
         let or = 1;
         let and = 2;
         let equal_equal = 3;
@@ -1419,122 +1043,122 @@ impl Parser {
         let sub = 10;
         let mul = 11;
         let div = 12;
-        if expression_stack[expression_stack.len() - 1] == div {
-            if expression_type == INT {
-                self.code.push(I_DIV);
-            } else if expression_type == FLOAT {
-                self.code.push(F_DIV);
-            } else if expression_type == STRING {
-                println!("String type does not support division on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
+        while expression_stack.is_empty() == false && self.get_precedence(value) <= self.get_precedence(expression_stack[expression_stack.len() - 1]) {
+            if expression_stack[expression_stack.len() - 1] == div {
+                if expression_type == INT {
+                    self.code.push(I_DIV);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_DIV);
+                } else {
+                    println!("Type does not support division on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == mul {
+                if expression_type == INT {
+                    self.code.push(I_MUL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_MUL);
+                } else {
+                    println!("Type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == sub {
+                if expression_type == INT {
+                    self.code.push(I_SUB);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_SUB);
+                } else {
+                    println!("Type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == add {
+                if expression_type == INT {
+                    self.code.push(I_ADD);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_ADD);
+                } else if expression_type == STRING {
+                    self.code.push(S_ADD);
+                } else {
+                    println!("Type does not support addition on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == greater_equal {
+                if expression_type == INT {
+                    self.code.push(I_GREATER_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_GREATER_EQUAL);
+                } else {
+                    println!("Type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == less_equal {
+                if expression_type == INT {
+                    self.code.push(I_LESS_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_LESS_EQUAL);
+                } else if expression_type == STRING {
+                    println!("Type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == greater {
+                if expression_type == INT {
+                    self.code.push(I_GREATER);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_GREATER);
+                } else if expression_type == STRING {
+                    println!("Type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == less {
+                if expression_type == INT {
+                    self.code.push(I_LESS);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_LESS);
+                } else if expression_type == STRING {
+                    println!("Type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == equal_equal {
+                if expression_type == INT {
+                    self.code.push(I_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_EQUAL);
+                } else if expression_type == STRING {
+                    self.code.push(S_EQUAL);
+                } else {
+                    println!("Type does not support equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == not_equal {
+                if expression_type == INT {
+                    self.code.push(I_NOT_EQUAL);
+                } else if expression_type == FLOAT {
+                    self.code.push(F_NOT_EQUAL);
+                } else if expression_type == STRING {
+                    self.code.push(S_NOT_EQUAL);
+                } else {
+                    println!("Type does not support not equal comparison on line {}.", tokens[self.current_token_num].line_num);
+                    self.error = true;
+                }
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == and {
+                self.code.push(OP_AND);
+                expression_stack.pop();
+            } else if expression_stack[expression_stack.len() - 1] == or {
+                self.code.push(OP_OR);
+                expression_stack.pop();
             }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == mul {
-            if expression_type == INT {
-                self.code.push(I_MUL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_MUL);
-            } else if expression_type == STRING {
-                println!("String type does not support multiplication on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == sub {
-            if expression_type == INT {
-                self.code.push(I_SUB);
-            } else if expression_type == FLOAT {
-                self.code.push(F_SUB);
-            } else if expression_type == STRING {
-                println!("String type does not support subtraction on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == add {
-            if expression_type == INT {
-                self.code.push(I_ADD);
-            } else if expression_type == FLOAT {
-                self.code.push(F_ADD);
-            } else if expression_type == STRING {
-                self.code.push(S_ADD);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater_equal {
-            if expression_type == INT {
-                self.code.push(I_GREATER_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less_equal {
-            if expression_type == INT {
-                self.code.push(I_LESS_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS_EQUAL);
-            } else if expression_type == STRING {
-                println!("String type does not support less than or equal comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == greater {
-            if expression_type == INT {
-                self.code.push(I_GREATER);
-            } else if expression_type == FLOAT {
-                self.code.push(F_GREATER);
-            } else if expression_type == STRING {
-                println!("String type does not support greater than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == less {
-            if expression_type == INT {
-                self.code.push(I_LESS);
-            } else if expression_type == FLOAT {
-                self.code.push(F_LESS);
-            } else if expression_type == STRING {
-                println!("String type does not support less than comparison on line {}.", tokens[self.current_token_num].line_num);
-                self.error = true;
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == equal_equal {
-            if expression_type == INT {
-                self.code.push(I_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_EQUAL);
-            } else if expression_type == STRING {
-                self.code.push(S_EQUAL);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == not_equal {
-            if expression_type == INT {
-                self.code.push(I_NOT_EQUAL);
-            } else if expression_type == FLOAT {
-                self.code.push(F_NOT_EQUAL);
-            } else if expression_type == STRING {
-                self.code.push(S_NOT_EQUAL);
-            }
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == and {
-            self.code.push(OP_AND);
-            expression_stack.pop();
-            expression_stack.push(value);
-        } else if expression_stack[expression_stack.len() - 1] == or {
-            self.code.push(OP_OR);
-            expression_stack.pop();
-            expression_stack.push(value);
         }
+        expression_stack.push(value);
     }
 
     fn change_expression_type(&mut self, tokens: &Vec<lexer::Token>) -> u8 {
@@ -1604,7 +1228,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(div);
                     } else {
-                        self.multiplicative_precedence(tokens, expression_stack, expression_type, div);
+                        self.shunting_yard(tokens, expression_stack, expression_type, div);
                     }
                 },
                 MUL => {
@@ -1612,7 +1236,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(mul);
                     } else {
-                        self.multiplicative_precedence(tokens, expression_stack, expression_type, mul);
+                        self.shunting_yard(tokens, expression_stack, expression_type, mul);
                     }
                 },
                 SUB => {
@@ -1620,7 +1244,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(sub);
                     } else {
-                        self.additive_precedence(tokens, expression_stack, expression_type, sub);
+                        self.shunting_yard(tokens, expression_stack, expression_type, sub);
                     }
                 },
                 ADD => {
@@ -1628,7 +1252,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(add);
                     } else {
-                        self.additive_precedence(tokens, expression_stack, expression_type, add);
+                        self.shunting_yard(tokens, expression_stack, expression_type, add);
                     }
                 },
                 GREATER_EQUAL => {
@@ -1636,7 +1260,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(greater_equal);
                     } else {
-                        self.relational_precedence(tokens, expression_stack, expression_type, greater_equal);
+                        self.shunting_yard(tokens, expression_stack, expression_type, greater_equal);
                     }
                 },
                 LESS_EQUAL => {
@@ -1644,7 +1268,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(less_equal);
                     } else {
-                        self.relational_precedence(tokens, expression_stack, expression_type, less_equal);
+                        self.shunting_yard(tokens, expression_stack, expression_type, less_equal);
                     }
                 },
                 GREATER => {
@@ -1652,7 +1276,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(greater);
                     } else {
-                        self.relational_precedence(tokens, expression_stack, expression_type, greater);
+                        self.shunting_yard(tokens, expression_stack, expression_type, greater);
                     }
                 },
                 LESS => {
@@ -1660,7 +1284,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(less);
                     } else {
-                        self.relational_precedence(tokens, expression_stack, expression_type, less);
+                        self.shunting_yard(tokens, expression_stack, expression_type, less);
                     }
                 },
                 NOT_EQUAL => {
@@ -1668,7 +1292,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(not_equal);
                     } else {
-                        self.equality_precedence(tokens, expression_stack, expression_type, not_equal);
+                        self.shunting_yard(tokens, expression_stack, expression_type, not_equal);
                     }
                 },
                 EQUAL_EQUAL => {
@@ -1676,7 +1300,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(equal_equal);
                     } else {
-                        self.equality_precedence(tokens, expression_stack, expression_type, equal_equal);
+                        self.shunting_yard(tokens, expression_stack, expression_type, equal_equal);
                     }
                 },
                 AND => {
@@ -1684,7 +1308,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(and);
                     } else {
-                        self.and_precendence(tokens, expression_stack, expression_type, and);
+                        self.shunting_yard(tokens, expression_stack, expression_type, and);
                     }
                     self.drain_expression_stack(tokens, expression_type, expression_stack);
                     expression_type = self.change_expression_type(tokens);
@@ -1694,7 +1318,7 @@ impl Parser {
                     if expression_stack.is_empty() == true {
                         expression_stack.push(or);
                     } else {
-                        self.or_precedence(tokens, expression_stack, expression_type, or);
+                        self.shunting_yard(tokens, expression_stack, expression_type, or);
                     }
                     self.drain_expression_stack(tokens, expression_type, expression_stack);
                     expression_type = self.change_expression_type(tokens);
@@ -1734,6 +1358,15 @@ impl Parser {
                             } else if x.return_type == standard_library::STRING && expression_type != STRING {
                                 println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
                                 self.error = true;
+                            } else if x.return_type == standard_library::VEC_INT && expression_type != VEC_INT {
+                                println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
+                                self.error = true;
+                            } else if x.return_type == standard_library::VEC_FLOAT && expression_type != VEC_FLOAT {
+                                println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
+                                self.error = true;
+                            } else if x.return_type == standard_library::VEC_STRING && expression_type != VEC_STRING {
+                                println!("Type mismatch on line {}.", tokens[self.current_token_num].line_num);
+                                self.error = true;
                             }
 
                             let return_type: i64;
@@ -1743,6 +1376,12 @@ impl Parser {
                                 return_type = standard_library::FLOAT;
                             } else if expression_type == STRING {
                                 return_type = standard_library::STRING;
+                            } else if expression_type == VEC_INT {
+                                return_type = standard_library::VEC_INT;
+                            } else if expression_type == VEC_FLOAT {
+                                return_type = standard_library::VEC_FLOAT;
+                            } else if expression_type == VEC_INT {
+                                return_type = standard_library::VEC_STRING;
                             } else {
                                 return_type = standard_library::VOID;
                             }
@@ -1926,6 +1565,15 @@ impl Parser {
         } else if tokens[self.current_token_num].token_num == STRING_TYPE {
             var_type = STRING;
             expression_type = STRING;
+        } else if tokens[self.current_token_num].token_num == VEC_INT {
+            var_type = VEC_INT;
+            expression_type = VEC_INT;
+        } else if tokens[self.current_token_num].token_num == VEC_FLOAT {
+            var_type = VEC_FLOAT;
+            expression_type = VEC_FLOAT;
+        } else if tokens[self.current_token_num].token_num == VEC_STRING {
+            var_type = VEC_STRING;
+            expression_type = VEC_STRING;
         }
         self.var_type(tokens);
         self.colon(tokens);
@@ -2146,6 +1794,12 @@ impl Parser {
                     self.expression(tokens, FLOAT, 100);
                 } else if arg_type == standard_library::STRING {
                     self.expression(tokens, STRING, 100);
+                } else if arg_type == standard_library::VEC_INT {
+                    self.expression(tokens, VEC_INT, 100);
+                } else if arg_type == standard_library::VEC_FLOAT {
+                    self.expression(tokens, VEC_FLOAT, 100);
+                } else if arg_type == standard_library::VEC_STRING {
+                    self.expression(tokens, VEC_STRING, 100);
                 }
                 current_arg_type += 1;
                 if current_arg_type != num_types {
