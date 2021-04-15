@@ -887,6 +887,7 @@ impl VM {
             VEC_INT_LEN => {
                 self.ip += 1;
                 let location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
 
                 self.stack.push(self.vec_int_constants[location].len() as i64);
             },
@@ -940,6 +941,7 @@ impl VM {
             VEC_FLOAT_LEN => {
                 self.ip += 1;
                 let location = self.stack[self.sp - 1] as usize;
+                self.stack.pop();
 
                 self.stack.push(self.vec_int_constants[location].len() as i64);
             },

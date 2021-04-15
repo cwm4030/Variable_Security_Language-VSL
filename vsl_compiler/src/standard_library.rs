@@ -148,8 +148,8 @@ pub fn get_sl_data() -> HashMap<String, SlData> {
     });
     sl_data.insert("vec_int_len".to_string(), SlData {
         sl_num: VEC_INT_LEN,
-        types: vec![VEC_INT, INT],
-        num_types: 2,
+        types: vec![VEC_INT],
+        num_types: 1,
         return_type: VOID,
     });
     sl_data.insert("vec_float_new".to_string(), SlData {

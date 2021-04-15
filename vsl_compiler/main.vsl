@@ -1,11 +1,15 @@
 fn void main() {
-    let x vec_int:0 = vec_int_new();
-    vec_int_push(x, 2);
-    vec_int_push(x, 64);
-    print(vec_int_get_index(x, 0), "\n");
-    print(vec_int_get_index(x, 1), "\n");
-    
-    let i int:0 = (6 + 7) * (9 + 2 * 7);
-    print(i, "\n");
+	let x vec_int:0 = vec_int_new();
+	let i int:0 = 0;
+	while i < 9 {
+		vec_int_push(x, 0);
+		i = i + 1;
+	}
+	
+	i = 0;
+	while i < vec_int_len(x) {
+		print(i, ": ", vec_int_get_index(x, i), "\n");
+		i = i + 1;
+	}
     return;
 }
