@@ -331,7 +331,11 @@ impl Parser {
                     self.consume_token();
                     if self.current_token_num + 1 < self.num_tokens {
                         if tokens[self.current_token_num + 1].token_num == INT_TYPE
-                            || tokens[self.current_token_num + 1].token_num == FLOAT_TYPE {
+                            || tokens[self.current_token_num + 1].token_num == FLOAT_TYPE 
+                            || tokens[self.current_token_num + 1].token_num == STRING_TYPE 
+                            || tokens[self.current_token_num + 1].token_num == VEC_INT
+                            || tokens[self.current_token_num + 1].token_num == VEC_FLOAT
+                            || tokens[self.current_token_num + 1].token_num == VEC_STRING {
                                 instruction_counter += 2;
                             }
                     }
@@ -371,6 +375,8 @@ impl Parser {
                                 }
                             } else if tokens[self.current_token_num - 1].token_string == "read".to_string() {
                                 instruction_counter += 3;
+                            } else {
+                                instruction_counter += 2;
                             }
                         } else {
                             instruction_counter += 3;
@@ -437,7 +443,9 @@ impl Parser {
                     instruction_counter += 1;
                     self.consume_token();
                 }
-                _ => self.consume_token(),
+                _ => {
+                    self.consume_token();
+                },
             }
         }
     }
@@ -999,30 +1007,42 @@ impl Parser {
     }
 
     fn get_precedence(&mut self, current_token_num: u8) -> u8 {
+        let or = 1;
+        let and = 2;
+        let equal_equal = 3;
+        let not_equal = 4;
+        let less = 5;
+        let greater = 6;
+        let less_equal = 7;
+        let greater_equal = 8;
+        let add = 9;
+        let sub = 10;
+        let mul = 11;
+        let div = 12;
         let precedence: u8;
-        if current_token_num == OR {
+        if current_token_num == or {
             precedence = 1;
-        } else if current_token_num == AND {
+        } else if current_token_num == and {
             precedence = 2;
-        } else if current_token_num == EQUAL_EQUAL {
+        } else if current_token_num == equal_equal {
             precedence = 3;
-        } else if current_token_num == NOT_EQUAL {
+        } else if current_token_num == not_equal {
             precedence = 3;
-        } else if current_token_num == LESS {
+        } else if current_token_num == less {
             precedence = 4;
-        } else if current_token_num == GREATER {
+        } else if current_token_num == greater {
             precedence = 4;
-        } else if current_token_num == LESS_EQUAL {
+        } else if current_token_num == less_equal {
             precedence = 4;
-        } else if current_token_num == GREATER_EQUAL {
+        } else if current_token_num == greater_equal {
             precedence = 4;
-        } else if current_token_num == ADD {
+        } else if current_token_num == add {
             precedence = 5;
-        } else if current_token_num == SUB {
+        } else if current_token_num == sub {
             precedence = 5;
-        } else if current_token_num == MUL {
+        } else if current_token_num == mul {
             precedence = 6;
-        } else if current_token_num == DIV {
+        } else if current_token_num == div {
             precedence = 6;
         } else {
             precedence = 0;
@@ -1305,22 +1325,22 @@ impl Parser {
                 },
                 AND => {
                     self.consume_token();
+                    self.drain_expression_stack(tokens, expression_type, expression_stack);
                     if expression_stack.is_empty() == true {
                         expression_stack.push(and);
                     } else {
                         self.shunting_yard(tokens, expression_stack, expression_type, and);
                     }
-                    self.drain_expression_stack(tokens, expression_type, expression_stack);
                     expression_type = self.change_expression_type(tokens);
                 },
                 OR => {
                     self.consume_token();
+                    self.drain_expression_stack(tokens, expression_type, expression_stack);
                     if expression_stack.is_empty() == true {
                         expression_stack.push(or);
                     } else {
                         self.shunting_yard(tokens, expression_stack, expression_type, or);
                     }
-                    self.drain_expression_stack(tokens, expression_type, expression_stack);
                     expression_type = self.change_expression_type(tokens);
                 },
                 _ => break,

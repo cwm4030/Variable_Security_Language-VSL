@@ -1,15 +1,32 @@
 fn void main() {
-	let x vec_int:0 = vec_int_new();
+	let board vec_int:0 = vec_int_new();
 	let i int:0 = 0;
 	while i < 9 {
-		vec_int_push(x, 0);
+		vec_int_push(board, 0);
 		i = i + 1;
 	}
 	
-	i = 0;
-	while i < vec_int_len(x) {
-		print(i, ": ", vec_int_get_index(x, i), "\n");
+	print_board(board);
+	
+    return;
+}
+
+fn void print_board(board vec_int:0) {
+	let i int:0 = 0;
+	while i < 9 {
+		if i == 3 or i == 6 {
+			print("|\n");
+			print("-----------\n");
+		}
+		if vec_int_get_index(board, i) == 0 {
+			print("|   ");
+		} else if vec_int_get_index(board, i) == 1 {
+			print("| X ");
+		} else if vec_int_get_index(board, i) == 2 {
+			print("| O ");
+		}
 		i = i + 1;
 	}
-    return;
+	print("|\n");
+	return;
 }
